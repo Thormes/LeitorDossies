@@ -9,6 +9,7 @@ Namespace Minerador
         Remunerações = 5
         CartaConcessão = 6
         HISCRE = 7
+        Laudos = 8
     End Enum
     Public Enum TipoDossie
         Inválido = 0
@@ -24,6 +25,11 @@ Namespace Minerador
             Sucesso = False
             TipoDeDossie = 0
             Autor = New Pessoa
+        End Sub
+        Public Sub New(Pessoa As Pessoa)
+            Sucesso = False
+            TipoDeDossie = 0
+            Autor = Pessoa
         End Sub
     End Class
     Public Class OutroProcesso
@@ -162,7 +168,7 @@ Namespace Minerador
         Public Property Resultado As String
         Public Property EncaminhaReabilitação As Boolean
         Public Property AcidenteTrabalho As Boolean
-        Public Property AuxilioAcidente As Boolean
+        Public Property AuxilioAcidente As String
         Public Property IsençãoCarencia As Boolean
         Public Property SugestãoLI As Boolean
     End Class

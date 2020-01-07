@@ -50,19 +50,19 @@ Module parseTabelas
     Friend Sub ParseTabela(idTabela As Integer, Elemento As HtmlNode, Pessoa As Pessoa)
         Select Case idTabela
             Case Is = TipoTabela.FichaSintética
-                parseTabelaSintetica(Elemento, Pessoa)
+                ParseTabelaSintetica(Elemento, Pessoa)
             Case Is = TipoTabela.RelaçãoProcessos
-                parseTabelaRelaçãoProcessos(Elemento, Pessoa)
+                ParseTabelaRelaçãoProcessos(Elemento, Pessoa)
             Case Is = TipoTabela.Requerimentos
-                parseTabelaRequerimentos(Elemento, Pessoa)
+                ParseTabelaRequerimentos(Elemento, Pessoa)
             Case Is = TipoTabela.RelaçõesPrevidenciárias
-                parseTabelaRelações(Elemento, Pessoa)
+                ParseTabelaRelações(Elemento, Pessoa)
             Case Is = TipoTabela.Remunerações
-                parseTabelaRemunerações(Elemento, Pessoa)
+                ParseTabelaRemunerações(Elemento, Pessoa)
             Case Is = TipoTabela.CartaConcessão
-                parseTabelaCartaConcessão(Elemento, Pessoa)
+                ParseTabelaCartaConcessão(Elemento, Pessoa)
             Case Is = TipoTabela.HISCRE
-                parseTabelaHISCRE(Elemento, Pessoa)
+                ParseTabelaHISCRE(Elemento, Pessoa)
         End Select
     End Sub
     Friend Sub ParseTabelaSintetica(Elemento As HtmlNode, ByRef Pessoa As Pessoa)

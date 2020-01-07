@@ -36,6 +36,7 @@ Partial Class Testador
         Me.HISCREToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem()
         Me.LimparToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.copyClipboard = New System.Windows.Forms.Button()
+        Me.MédicoToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuStrip1.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -79,7 +80,7 @@ Partial Class Testador
         '
         'MenuStrip1
         '
-        Me.MenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.LerToolStripMenuItem, Me.LeituraToolStripMenuItem, Me.LimparToolStripMenuItem})
+        Me.MenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.LerToolStripMenuItem, Me.MédicoToolStripMenuItem, Me.LeituraToolStripMenuItem, Me.LimparToolStripMenuItem})
         Me.MenuStrip1.Location = New System.Drawing.Point(0, 0)
         Me.MenuStrip1.Name = "MenuStrip1"
         Me.MenuStrip1.Size = New System.Drawing.Size(1588, 24)
@@ -89,8 +90,8 @@ Partial Class Testador
         'LerToolStripMenuItem
         '
         Me.LerToolStripMenuItem.Name = "LerToolStripMenuItem"
-        Me.LerToolStripMenuItem.Size = New System.Drawing.Size(35, 20)
-        Me.LerToolStripMenuItem.Text = "Ler"
+        Me.LerToolStripMenuItem.Size = New System.Drawing.Size(94, 20)
+        Me.LerToolStripMenuItem.Text = "Previdenciário"
         '
         'LeituraToolStripMenuItem
         '
@@ -102,31 +103,31 @@ Partial Class Testador
         'DossiêToolStripMenuItem
         '
         Me.DossiêToolStripMenuItem.Name = "DossiêToolStripMenuItem"
-        Me.DossiêToolStripMenuItem.Size = New System.Drawing.Size(178, 22)
+        Me.DossiêToolStripMenuItem.Size = New System.Drawing.Size(180, 22)
         Me.DossiêToolStripMenuItem.Text = "Ficha Sintética"
         '
         'BenefíciosToolStripMenuItem
         '
         Me.BenefíciosToolStripMenuItem.Name = "BenefíciosToolStripMenuItem"
-        Me.BenefíciosToolStripMenuItem.Size = New System.Drawing.Size(178, 22)
+        Me.BenefíciosToolStripMenuItem.Size = New System.Drawing.Size(180, 22)
         Me.BenefíciosToolStripMenuItem.Text = "Benefícios"
         '
         'VínculosToolStripMenuItem
         '
         Me.VínculosToolStripMenuItem.Name = "VínculosToolStripMenuItem"
-        Me.VínculosToolStripMenuItem.Size = New System.Drawing.Size(178, 22)
+        Me.VínculosToolStripMenuItem.Size = New System.Drawing.Size(180, 22)
         Me.VínculosToolStripMenuItem.Text = "Vínculos"
         '
         'HISCREToolStripMenuItem
         '
         Me.HISCREToolStripMenuItem.Name = "HISCREToolStripMenuItem"
-        Me.HISCREToolStripMenuItem.Size = New System.Drawing.Size(178, 22)
+        Me.HISCREToolStripMenuItem.Size = New System.Drawing.Size(180, 22)
         Me.HISCREToolStripMenuItem.Text = "Carta de Concessão"
         '
         'HISCREToolStripMenuItem1
         '
         Me.HISCREToolStripMenuItem1.Name = "HISCREToolStripMenuItem1"
-        Me.HISCREToolStripMenuItem1.Size = New System.Drawing.Size(178, 22)
+        Me.HISCREToolStripMenuItem1.Size = New System.Drawing.Size(180, 22)
         Me.HISCREToolStripMenuItem1.Text = "HISCRE"
         '
         'LimparToolStripMenuItem
@@ -143,6 +144,12 @@ Partial Class Testador
         Me.copyClipboard.TabIndex = 5
         Me.copyClipboard.Text = "Copiar para Clipboard"
         Me.copyClipboard.UseVisualStyleBackColor = True
+        '
+        'MédicoToolStripMenuItem
+        '
+        Me.MédicoToolStripMenuItem.Name = "MédicoToolStripMenuItem"
+        Me.MédicoToolStripMenuItem.Size = New System.Drawing.Size(59, 20)
+        Me.MédicoToolStripMenuItem.Text = "Médico"
         '
         'Testador
         '
@@ -179,4 +186,5 @@ Partial Class Testador
     Friend WithEvents LimparToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents HISCREToolStripMenuItem1 As ToolStripMenuItem
     Friend WithEvents copyClipboard As Button
+    Friend WithEvents MédicoToolStripMenuItem As ToolStripMenuItem
 End Class
