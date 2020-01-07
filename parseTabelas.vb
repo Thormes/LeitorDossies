@@ -39,6 +39,10 @@ Module parseTabelas
                     retorno.Sucesso = True
                     retorno.IdTabela = TipoTabela.HISCRE
                     retorno.Elemento = tabela.ParentNode.ParentNode.ParentNode
+                Case Is = "DATA DO EXAME"
+                    retorno.Sucesso = True
+                    retorno.IdTabela = TipoTabela.Laudos
+                    retorno.Elemento = tabela.ParentNode.ParentNode.ParentNode
                 Case Else
                     retorno.Sucesso = False
                     retorno.IdTabela = TipoTabela.NãoIdentificada
@@ -50,19 +54,21 @@ Module parseTabelas
     Friend Sub ParseTabela(idTabela As Integer, Elemento As HtmlNode, Pessoa As Pessoa)
         Select Case idTabela
             Case Is = TipoTabela.FichaSintética
-                ParseTabelaSintetica(Elemento, Pessoa)
+                parseTabelaSintetica(Elemento, Pessoa)
             Case Is = TipoTabela.RelaçãoProcessos
-                ParseTabelaRelaçãoProcessos(Elemento, Pessoa)
+                parseTabelaRelaçãoProcessos(Elemento, Pessoa)
             Case Is = TipoTabela.Requerimentos
-                ParseTabelaRequerimentos(Elemento, Pessoa)
+                parseTabelaRequerimentos(Elemento, Pessoa)
             Case Is = TipoTabela.RelaçõesPrevidenciárias
-                ParseTabelaRelações(Elemento, Pessoa)
+                parseTabelaRelações(Elemento, Pessoa)
             Case Is = TipoTabela.Remunerações
-                ParseTabelaRemunerações(Elemento, Pessoa)
+                parseTabelaRemunerações(Elemento, Pessoa)
             Case Is = TipoTabela.CartaConcessão
-                ParseTabelaCartaConcessão(Elemento, Pessoa)
+                parseTabelaCartaConcessão(Elemento, Pessoa)
             Case Is = TipoTabela.HISCRE
                 ParseTabelaHISCRE(Elemento, Pessoa)
+            Case Is = TipoTabela.Laudos
+                ParseTabelaLaudos(Elemento, Pessoa)
         End Select
     End Sub
     Friend Sub ParseTabelaSintetica(Elemento As HtmlNode, ByRef Pessoa As Pessoa)
@@ -82,7 +88,7 @@ Module parseTabelas
         Dim linhas As HtmlNodeCollection = Elemento.SelectNodes(".//tr")
         For Each linha In linhas
             Dim Processo As New OutroProcesso
-            If linha.SelectSingleNode(".//th") Is Nothing AndAlso linha.ParentNode.ParentNode.Name <> "td" Then
+            If linha.SelectSingleNode(".//th") Is Nothing AndAlso linha.ParentNode.ParentNode.Name <> "td" And linha.ChildNodes.Count > 3 Then
                 Processo.Processo = linha.SelectSingleNode(".//td[1]").InnerText.Trim
                 Processo.Assunto = linha.SelectSingleNode(".//td[2]").InnerText.Trim
                 Processo.Interessados = String.Join("; ", linha.SelectNodes(".//td[3]/table/tr/td").Select(Function(i) i.InnerText.Trim))
@@ -381,7 +387,7 @@ Module parseTabelas
                     Dim Total As Double = 0
                     Dim TotalDescontos As Double = 0
                     For Each rubrica In rubricas
-                        If rubrica.SelectSingleNode(".//th") Is Nothing Then
+                        If rubrica.SelectSingleNode(".//th") Is Nothing AndAlso rubrica.SelectSingleNode(".//td[1]").InnerText.Trim <> "" Then
                             Dim valores As New Crédito With {
                                 .Rubrica = rubrica.SelectSingleNode(".//td[1]").InnerText.Trim,
                                 .Descrição = rubrica.SelectSingleNode(".//td[2]").InnerText.Trim,
@@ -399,6 +405,78 @@ Module parseTabelas
                     If benefícionovo Then Pessoa.Benefícios.Add(benefício)
                 End If
             Next
+        Next
+    End Sub
+    Friend Sub ParseTabelaLaudos(Elemento As HtmlNode, Pessoa As Pessoa)
+        Dim tabelaPessoa As HtmlNode = Elemento.SelectSingleNode(".//table")
+        Pessoa.Nome = tabelaPessoa.SelectSingleNode(".//tr[1]/td[1]").InnerText.Trim
+        Pessoa.CPF = tabelaPessoa.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim
+        Pessoa.NIT = tabelaPessoa.SelectSingleNode(".//tr[3]/td[1]").InnerText.Trim
+        Pessoa.Nascimento = tabelaPessoa.SelectSingleNode(".//tr[4]/td[1]").InnerText.Trim
+        If Elemento.SelectNodes(".//table").Count < 2 Then 'Se só tem os dados básicos
+            Exit Sub
+        End If
+
+        Dim ListaLaudos As HtmlNodeCollection = Elemento.SelectNodes(".//div[@class='conteudo'][1]/div[@class='conteudo']")
+
+        For Each Laudo In ListaLaudos
+            Dim NovoLaudo As New Laudo
+            Dim benefício As Benefício
+            Dim benefícionovo As Boolean = False
+            Dim NB As String = Laudo.SelectSingleNode(".//table[1]/tr[2]/td[2]").InnerText.Trim
+            For Each benef In Pessoa.Benefícios
+                If benef.NB = NB Then
+                    benefício = benef
+                    Exit For
+                End If
+            Next
+            If benefício Is Nothing Then
+                benefício = New Benefício
+                benefícionovo = True
+            End If
+            Dim tabelasLaudo As HtmlNodeCollection = Laudo.SelectNodes(".//table")
+            Dim dadosLaudo As HtmlNode = tabelasLaudo.Item(0)
+            Dim dadosLaudo2 As HtmlNode
+            Dim dadosLaudo3 As HtmlNode
+
+            If tabelasLaudo.Count > 2 Then
+                dadosLaudo2 = tabelasLaudo.Item(1)
+                dadosLaudo3 = tabelasLaudo.Item(2)
+            End If
+
+            NovoLaudo.Benefício = dadosLaudo.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim
+            NovoLaudo.NB = dadosLaudo.SelectSingleNode(".//tr[2]/td[2]").InnerText.Trim
+            NovoLaudo.Requerimento = dadosLaudo.SelectSingleNode(".//tr[2]/td[3]").InnerText.Trim
+            NovoLaudo.Ocupação = dadosLaudo.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim
+            NovoLaudo.DataExame = dadosLaudo.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim
+            NovoLaudo.DER = dadosLaudo2.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim
+            NovoLaudo.DIB = dadosLaudo2.SelectSingleNode(".//tr[2]/td[2]").InnerText.Trim
+            NovoLaudo.DID = dadosLaudo2.SelectSingleNode(".//tr[2]/td[3]").InnerText.Trim
+            NovoLaudo.DII = dadosLaudo2.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim
+            NovoLaudo.DCB = dadosLaudo2.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim
+            NovoLaudo.CID = dadosLaudo2.SelectSingleNode(".//tr[2]/td[6]").InnerText.Trim
+            NovoLaudo.EncaminhaReabilitação = parseBool(dadosLaudo3.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim)
+            NovoLaudo.AcidenteTrabalho = parseBool(dadosLaudo3.SelectSingleNode(".//tr[2]/td[2]").InnerText.Trim)
+            NovoLaudo.AuxilioAcidente = dadosLaudo3.SelectSingleNode(".//tr[2]/td[3]").InnerText.Trim
+            NovoLaudo.IsençãoCarencia = parseBool(dadosLaudo3.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim)
+            NovoLaudo.SugestãoLI = parseBool(dadosLaudo3.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim)
+            NovoLaudo.Histórico = Laudo.SelectSingleNode(".//p[1]").InnerText.Trim
+            NovoLaudo.ExameFísico = Laudo.SelectSingleNode(".//p[2]").InnerText.Trim
+            NovoLaudo.Considerações = Laudo.SelectSingleNode(".//p[3]").InnerText.Trim
+            NovoLaudo.Resultado = Laudo.SelectSingleNode(".//p[4]").InnerText.Trim
+            If benefícionovo Then
+                benefício.NB = NovoLaudo.NB
+                benefício.DER = NovoLaudo.DER
+                benefício.DIB = NovoLaudo.DIB
+                benefício.DCB = NovoLaudo.DCB
+                benefício.NaturezaOcupação = NovoLaudo.Ocupação
+            End If
+
+
+            benefício.Laudos.Add(NovoLaudo)
+            If benefícionovo Then Pessoa.Benefícios.Add(benefício)
+            benefício = Nothing
+
         Next
     End Sub
 End Module
