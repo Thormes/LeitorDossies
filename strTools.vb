@@ -40,6 +40,11 @@ Module StrTools
         texto = rgx.Replace(texto, "")
         Return texto
     End Function
+    Friend Function SomenteNumerico(ByVal texto As String) As String
+        Dim rgx As Regex = New Regex("[^0-9]")
+        texto = rgx.Replace(texto, "")
+        Return texto
+    End Function
 
     Friend Function RetirarAcentuacao(ByVal texto As String) As String
         Dim toReplace As Char() = "àèìòùÀÈÌÒÙ äëïöüÄËÏÖÜ âêîôûÂÊÎÔÛ áéíóúÁÉÍÓÚðÐýÝ ãñõÃÑÕšŠžŽçÇåÅøØ".ToCharArray()

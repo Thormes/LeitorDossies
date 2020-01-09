@@ -54,17 +54,17 @@ Module parseTabelas
     Friend Sub ParseTabela(idTabela As Integer, Elemento As HtmlNode, Pessoa As Pessoa)
         Select Case idTabela
             Case Is = TipoTabela.FichaSintética
-                parseTabelaSintetica(Elemento, Pessoa)
+                ParseTabelaSintetica(Elemento, Pessoa)
             Case Is = TipoTabela.RelaçãoProcessos
-                parseTabelaRelaçãoProcessos(Elemento, Pessoa)
+                ParseTabelaRelaçãoProcessos(Elemento, Pessoa)
             Case Is = TipoTabela.Requerimentos
-                parseTabelaRequerimentos(Elemento, Pessoa)
+                ParseTabelaRequerimentos(Elemento, Pessoa)
             Case Is = TipoTabela.RelaçõesPrevidenciárias
-                parseTabelaRelações(Elemento, Pessoa)
+                ParseTabelaRelações(Elemento, Pessoa)
             Case Is = TipoTabela.Remunerações
-                parseTabelaRemunerações(Elemento, Pessoa)
+                ParseTabelaRemunerações(Elemento, Pessoa)
             Case Is = TipoTabela.CartaConcessão
-                parseTabelaCartaConcessão(Elemento, Pessoa)
+                ParseTabelaCartaConcessão(Elemento, Pessoa)
             Case Is = TipoTabela.HISCRE
                 ParseTabelaHISCRE(Elemento, Pessoa)
             Case Is = TipoTabela.Laudos
@@ -103,6 +103,7 @@ Module parseTabelas
         Dim linhas As HtmlNodeCollection = Elemento.SelectNodes(".//tr")
         For Each linha In linhas
             Dim benefício As New Benefício
+            Dim benefícionovo As Boolean = True
             If linha.SelectSingleNode(".//th") Is Nothing Then
                 benefício.NB = linha.SelectSingleNode(".//td[1]").InnerText.Trim
                 benefício.Espécie = linha.SelectSingleNode(".//td[2]").InnerText.Trim
@@ -111,7 +112,12 @@ Module parseTabelas
                 benefício.DCB = linha.SelectSingleNode(".//td[5]").InnerText.Trim
                 benefício.Status = linha.SelectSingleNode(".//td[6]").InnerText.Trim
                 benefício.Motivo = linha.SelectSingleNode(".//td[7]").InnerText.Trim
-                Pessoa.Benefícios.Add(benefício)
+                For Each benef In Pessoa.Benefícios
+                    If benef.NB = benefício.NB Then
+                        benefícionovo = False
+                    End If
+                Next
+                If benefícionovo Then Pessoa.Benefícios.Add(benefício)
             End If
         Next
     End Sub
@@ -146,10 +152,18 @@ Module parseTabelas
                 relação.Ocupação = linha.SelectSingleNode(".//td[8]").InnerText.Trim
                 relação.ÚltimaRemuneração = linha.SelectSingleNode(".//td[9]").InnerText.Trim
                 Dim relindicador = linha.SelectSingleNode(".//td[10]").InnerText
-                If relindicador <> "" Then relação.Indicadores = New List(Of Indicador)
-                For Each indicador In listaindicadores
-                    If relindicador = indicador.Indicador Then relação.Indicadores.Add(indicador)
-                Next
+                If relindicador <> "" Then
+                    relação.Indicadores = New List(Of Indicador)
+                    For Each indicador In listaindicadores
+                        Dim indicadoresvinculo = Split(Replace(relindicador.Trim, ",", ""), " ")
+                        For i = 0 To indicadoresvinculo.Length - 1
+                            If indicador.Indicador = indicadoresvinculo(i) Then
+                                relação.Indicadores.Add(indicador)
+                            End If
+                        Next
+                    Next
+
+                End if
                 relação.CNPJ = linha.SelectSingleNode(".//td[3]").InnerText.Trim
                 Pessoa.Vínculos.Add(relação)
             End If
@@ -157,7 +171,16 @@ Module parseTabelas
     End Sub
     Friend Sub ParseTabelaRemunerações(Elemento As HtmlNode, Pessoa As Pessoa)
         Dim listavinculos As HtmlNodeCollection = Elemento.SelectNodes(".//div[@id='div_competencias']/table/tr")
-        Dim linhabenefício As Integer = 1
+        Dim tabelaIndicadores As HtmlNode = Elemento.SelectSingleNode(".//preceding::div[1]")
+        Dim listaIndicadores As New List(Of Indicador)
+        If tabelaIndicadores IsNot Nothing AndAlso tabelaIndicadores.InnerText.Contains("INDICADORES") Then
+            Dim linhasIndicadores As HtmlNodeCollection = tabelaIndicadores.SelectNodes(".//table[1]/tr")
+            For Each linha In linhasIndicadores
+                If linha.SelectSingleNode(".//th") IsNot Nothing Then Continue For
+                listaIndicadores.Add(New Indicador With {.Indicador = linha.SelectSingleNode(".//td[1]").InnerText.Trim, .Descrição = linha.SelectSingleNode(".//td[2]").InnerText.Trim})
+            Next
+        End If
+
         For Each vinculo In listavinculos
             Dim relaçãonova As Boolean = False, benefícionovo As Boolean = False
             Dim relação As Vínculo
@@ -181,35 +204,95 @@ Module parseTabelas
                     relaçãonova = True
                 End If
                 Dim listaremunerações As HtmlNode = vinculo.ParentNode.ParentNode.SelectSingleNode(".//center/b[1]")
-                If listaremunerações IsNot Nothing AndAlso listaremunerações.InnerText = "Lista de Remunerações" Then
-                    Dim tabelaremunerações As HtmlNodeCollection = listaremunerações.ParentNode.SelectNodes(".//table[2]/tr")
-                    For Each trremuneração In tabelaremunerações
-                        If relação.Remunerações Is Nothing Then relação.Remunerações = New List(Of Remuneração)
-                        Dim remuneração As New Remuneração With {
-                               .Competência = trremuneração.SelectSingleNode(".//td[1]").InnerText,
-                                .Remuneração = trremuneração.SelectSingleNode(".//td[3]").InnerText
-                           }
-                        If trremuneração.SelectSingleNode(".//td[4]").InnerText.Trim <> "" Then
-                            remuneração.Indicadores.Add(New Indicador With {.Indicador = trremuneração.SelectSingleNode(".//td[4]").InnerText})
-                        End If
-                        relação.Remunerações.Add(remuneração)
-                        If trremuneração.SelectSingleNode(".//td[5]") IsNot Nothing Then
-                            remuneração = New Remuneração With {
-                                   .Competência = trremuneração.SelectSingleNode(".//td[5]").InnerText,
-                                   .Remuneração = trremuneração.SelectSingleNode(".//td[7]").InnerText
-                                }
-                            If trremuneração.SelectSingleNode(".//td[8]").InnerText.Trim <> "" Then
-                                remuneração.Indicadores.Add(New Indicador With {.Indicador = trremuneração.SelectSingleNode(".//td[8]").InnerText})
+                If listaremunerações IsNot Nothing AndAlso (listaremunerações.InnerText = "Lista de Remunerações" Or listaremunerações.InnerText = "Lista de Recolhimentos") Then
+                    Dim tabelaremunerações As HtmlNodeCollection
+                    If listaremunerações.InnerText = "Lista de Remunerações" Then
+                        tabelaremunerações = listaremunerações.ParentNode.SelectNodes(".//table[2]/tr")
+                        For Each trremuneração In tabelaremunerações
+                            If relação.Remunerações Is Nothing Then relação.Remunerações = New List(Of Remuneração)
+                            Dim remuneração As New Remuneração With {
+                                   .Competência = trremuneração.SelectSingleNode(".//td[1]").InnerText,
+                                    .Remuneração = trremuneração.SelectSingleNode(".//td[3]").InnerText
+                               }
+                            If trremuneração.SelectSingleNode(".//td[4]").InnerText.Trim <> "" Then
+                                For Each indicador In listaIndicadores
+                                    Dim indicadoresremuneração = Split(Replace(trremuneração.SelectSingleNode(".//td[4]").InnerText.Trim, ",", ""), " ")
+                                    For i = 0 To indicadoresremuneração.Length - 1
+                                        If indicador.Indicador = indicadoresremuneração(i) Then
+                                            remuneração.Indicadores.Add(indicador)
+                                        End If
+                                    Next
+                                Next
                             End If
                             relação.Remunerações.Add(remuneração)
-                        End If
+                            If trremuneração.SelectSingleNode(".//td[5]") IsNot Nothing Then
+                                remuneração = New Remuneração With {
+                                       .Competência = trremuneração.SelectSingleNode(".//td[5]").InnerText,
+                                       .Remuneração = trremuneração.SelectSingleNode(".//td[7]").InnerText
+                                    }
+                                If trremuneração.SelectSingleNode(".//td[8]").InnerText.Trim <> "" Then
+                                    For Each indicador In listaIndicadores
+                                        Dim indicadoresremuneração = Split(Replace(trremuneração.SelectSingleNode(".//td[8]").InnerText.Trim, ",", ""), " ")
+                                        For i = 0 To indicadoresremuneração.Length - 1
+                                            If indicador.Indicador = indicadoresremuneração(i) Then
+                                                remuneração.Indicadores.Add(indicador)
+                                            End If
+                                        Next
+                                    Next
+                                End If
+                                relação.Remunerações.Add(remuneração)
+                            End If
 
-                    Next
+                        Next
+                    ElseIf listaremunerações.InnerText = "Lista de Recolhimentos" Then
+                        tabelaremunerações = listaremunerações.ParentNode.ParentNode.ParentNode.SelectNodes(".//table[2]/tr")
+                        For Each trremuneração In tabelaremunerações
+                            If relação.Recolhimentos Is Nothing Then relação.Recolhimentos = New List(Of Recolhimento)
+                            Dim remuneração As New Recolhimento With {
+                                   .Competência = trremuneração.SelectSingleNode(".//td[1]").InnerText,
+                                    .DataPagamento = trremuneração.SelectSingleNode(".//td[2]").InnerText,
+                                    .Contribuição = trremuneração.SelectSingleNode(".//td[3]").InnerText,
+                                    .SalárioContribuição = trremuneração.SelectSingleNode(".//td[4]").InnerText
+                               }
+                            If trremuneração.SelectSingleNode(".//td[5]").InnerText.Trim <> "" Then
+                                For Each indicador In listaIndicadores
+                                    Dim indicadoresremuneração = Split(Replace(trremuneração.SelectSingleNode(".//td[5]").InnerText.Trim, ",", ""), " ")
+                                    For i = 0 To indicadoresremuneração.Length - 1
+                                        If indicador.Indicador = indicadoresremuneração(i) Then
+                                            remuneração.Indicadores.Add(indicador)
+                                        End If
+                                    Next
+                                Next
+                            End If
+                            relação.Recolhimentos.Add(remuneração)
+                            If trremuneração.SelectSingleNode(".//td[6]") IsNot Nothing Then
+                                remuneração = New Recolhimento With {
+                                       .Competência = trremuneração.SelectSingleNode(".//td[6]").InnerText,
+                                       .DataPagamento = trremuneração.SelectSingleNode(".//td[7]").InnerText,
+                                       .Contribuição = trremuneração.SelectSingleNode(".//td[8]").InnerText,
+                                       .SalárioContribuição = trremuneração.SelectSingleNode(".//td[9]").InnerText
+                                    }
+                                If trremuneração.SelectSingleNode(".//td[10]").InnerText.Trim <> "" Then
+                                    For Each indicador In listaIndicadores
+                                        Dim indicadoresremuneração = Split(Replace(trremuneração.SelectSingleNode(".//td[10]").InnerText.Trim, ",", ""), " ")
+                                        For i = 0 To indicadoresremuneração.Length - 1
+                                            If indicador.Indicador = indicadoresremuneração(i) Then
+                                                remuneração.Indicadores.Add(indicador)
+                                            End If
+                                        Next
+                                    Next
+                                End If
+                                relação.Recolhimentos.Add(remuneração)
+                            End If
+
+                        Next
+                    End If
+
 
                 End If
                 If relaçãonova = True Then
                     relação.Sequencial = vinculo.SelectSingleNode(".//table/tr[2]/td[1]").InnerText.Trim
-                    If vinculo.SelectSingleNode(".//table/tr[2]/td[2]").InnerText.Trim.Length <> 10 Then
+                    If vinculo.SelectSingleNode(".//table/tr[2]/td[2]").InnerText.Trim.Length <> 10 And vinculo.SelectSingleNode(".//table/tr[2]/td[2]").InnerText.Trim.Length <> 9 Then
                         relação.CNPJ = vinculo.SelectSingleNode(".//table/tr[2]/td[2]").InnerText.Trim
                         relação.Origem = vinculo.SelectSingleNode(".//table/tr[2]/td[3]").InnerText.Trim
                         relação.Inicio = vinculo.SelectSingleNode(".//table/tr[2]/td[4]").InnerText.Trim
@@ -262,7 +345,7 @@ Module parseTabelas
 
                     benefício.RMI = dadosbenef2.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim
                     benefício.SB = Replace(dadosbenef2.SelectSingleNode(".//tr[2]/td[2]").InnerText.Trim, "-", "0")
-                    benefício.Coeficiente = Replace(dadosbenef2.SelectSingleNode(".//tr[2]/td[3]").InnerText, "%", "").Trim / 100
+                    benefício.Coeficiente = If(SomenteNumerico(dadosbenef2.SelectSingleNode(".//tr[2]/td[3]").InnerText) <> "", SomenteNumerico(dadosbenef2.SelectSingleNode(".//tr[2]/td[3]").InnerText) / 100, 0)
                     benefício.RMA = dadosbenef2.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim
                     benefício.DAT = dadosbenef2.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim
                     benefício.DataNBAnterior = dadosbenef2.SelectSingleNode(".//tr[2]/td[6]").InnerText.Trim

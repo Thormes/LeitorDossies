@@ -12,7 +12,7 @@ Public Class Testador
         Dim textoEntrada As String = txtEntrada.Text
         textoEntrada = EliminarQuebras(textoEntrada)
         textoEntrada = NormalizarEspacos(textoEntrada)
-        Dim novoDossie As New DossiePrevidenciario
+        Dim novoDossie As New DossiePrevidenciario(Autor)
         If textoEntrada.Contains("<title>SAPIENS - Dossiê Previdênciário</title>") Then
             novoDossie.Sucesso = True
             novoDossie.TipoDeDossie = TipoDossie.Previdenciário
@@ -38,7 +38,7 @@ Public Class Testador
             Dim json = JsonConvert.SerializeObject(novoDossie.Autor, Newtonsoft.Json.Formatting.Indented)
             Autor = novoDossie.Autor
             txtSaída.Text = json
-            System.IO.File.WriteAllText(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) & "/" & novoDossie.Autor.Nome & ".json", json)
+            System.IO.File.WriteAllText(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) & "\Pesquisas INSS\" & novoDossie.Autor.Nome & ".json", json)
 
         Else
             MsgBox("Não é Dossiê!")
@@ -78,8 +78,8 @@ Public Class Testador
                     listaTabelas.Add(teste.IdTabela)
                 End If
             Next
-            Dim json = JsonConvert.SerializeObject(novoDossie.Autor)
-
+            Dim json = JsonConvert.SerializeObject(novoDossie.Autor, Newtonsoft.Json.Formatting.Indented)
+            System.IO.File.WriteAllText(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) & "\Pesquisas INSS\" & novoDossie.Autor.Nome & ".json", json)
             txtSaída.Text = json
 
         Else
@@ -112,7 +112,7 @@ Public Class Testador
                     listaTabelas.Add(teste.IdTabela)
                 End If
             Next
-            Dim json = JsonConvert.SerializeObject(novoDossie.Autor.Benefícios)
+            Dim json = JsonConvert.SerializeObject(novoDossie.Autor.Benefícios, Newtonsoft.Json.Formatting.Indented)
 
             txtSaída.Text = json
 
@@ -160,9 +160,13 @@ Public Class Testador
             Dim json = JsonConvert.SerializeObject(novoDossie.Autor, Newtonsoft.Json.Formatting.Indented)
 
             txtSaída.Text = json
-
+            System.IO.File.WriteAllText(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) & "\Pesquisas INSS\" & novoDossie.Autor.Nome & ".json", json)
         Else
             MsgBox("Não é Dossiê!")
         End If
+    End Sub
+
+    Private Sub ResetarAutorToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles ResetarAutorToolStripMenuItem.Click
+        Autor = New Pessoa
     End Sub
 End Class

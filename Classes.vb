@@ -104,11 +104,19 @@ Namespace Minerador
         Public Property ÚltimaRemuneração As String
         Public Property Indicadores As New List(Of Indicador)
         Public Property Remunerações As New List(Of Remuneração)
+        Public Property Recolhimentos As New List(Of Recolhimento)
 
     End Class
     Public Class Remuneração
         Public Property Competência As String
         Public Property Remuneração As Double
+        Public Property Indicadores As New List(Of Indicador)
+    End Class
+    Public Class Recolhimento
+        Public Property Competência As String
+        Public Property DataPagamento As String
+        Public Property Contribuição As Double
+        Public Property SalárioContribuição As Double
         Public Property Indicadores As New List(Of Indicador)
     End Class
     Public Class Indicador
