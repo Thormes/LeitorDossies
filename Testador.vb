@@ -27,7 +27,7 @@ Public Class Testador
     End Sub
 
     Private Sub DossiêToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles DossiêToolStripMenuItem.Click
-        LeituraParcial(TipoTabela.FichaSintética)
+        LeituraParcial(TipoTabela.FichaSintetica)
     End Sub
     Private Sub LeituraParcial(tipoTabela As TipoTabela)
         Dim textoEntrada As String = txtEntrada.Text
@@ -81,7 +81,7 @@ Public Class Testador
                     listaTabelas.Add(teste.IdTabela)
                 End If
             Next
-            Dim json = JsonConvert.SerializeObject(novoDossie.Autor.Benefícios, Newtonsoft.Json.Formatting.Indented)
+            Dim json = JsonConvert.SerializeObject(novoDossie.Autor.Beneficios, Newtonsoft.Json.Formatting.Indented)
 
             txtSaída.Text = json
 
@@ -91,7 +91,7 @@ Public Class Testador
     End Sub
 
     Private Sub HISCREToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles HISCREToolStripMenuItem.Click
-        LeituraParcial(TipoTabela.CartaConcessão)
+        LeituraParcial(TipoTabela.CartaConcessao)
     End Sub
 
     Private Sub HISCREToolStripMenuItem1_Click(sender As Object, e As EventArgs) Handles HISCREToolStripMenuItem1.Click

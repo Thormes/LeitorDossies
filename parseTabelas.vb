@@ -17,11 +17,11 @@ Module parseTabelas
             Select Case últimocabeçalho.InnerText
                 Case Is = "NÚMERO ÚNICO (CNJ)"
                     retorno.Sucesso = True
-                    retorno.IdTabela = TipoTabela.FichaSintética
+                    retorno.IdTabela = TipoTabela.FichaSintetica
                     retorno.Elemento = tabela
                 Case Is = "DATA ABERTURA"
                     retorno.Sucesso = True
-                    retorno.IdTabela = TipoTabela.RelaçãoProcessos
+                    retorno.IdTabela = TipoTabela.RelacaoProcessos
                     retorno.Elemento = tabela
                 Case Is = "MOTIVO"
                     retorno.Sucesso = True
@@ -29,15 +29,15 @@ Module parseTabelas
                     retorno.Elemento = tabela
                 Case Is = "INDICADORES"
                     retorno.Sucesso = True
-                    retorno.IdTabela = TipoTabela.RelaçõesPrevidenciárias
+                    retorno.IdTabela = TipoTabela.RelacoesPrevidenciarias
                     retorno.Elemento = tabela
                 Case Is = "Indicadores (*)", "Motivo", "APS Requerimento"
                     retorno.Sucesso = True
-                    retorno.IdTabela = TipoTabela.Remunerações
+                    retorno.IdTabela = TipoTabela.Remuneracoes
                     retorno.Elemento = tabela.ParentNode.ParentNode
                 Case Is = "Data de Concessão do Benefício"
                     retorno.Sucesso = True
-                    retorno.IdTabela = TipoTabela.CartaConcessão
+                    retorno.IdTabela = TipoTabela.CartaConcessao
                     retorno.Elemento = tabela.ParentNode.ParentNode.ParentNode
                 Case Is = "Data Início Pagamento (DIP)"
                     retorno.Sucesso = True
@@ -49,7 +49,7 @@ Module parseTabelas
                     retorno.Elemento = tabela.ParentNode.ParentNode.ParentNode
                 Case Else
                     retorno.Sucesso = False
-                    retorno.IdTabela = TipoTabela.NãoIdentificada
+                    retorno.IdTabela = TipoTabela.NaoIdentificada
                     retorno.Elemento = Nothing
             End Select
         End If
@@ -57,17 +57,17 @@ Module parseTabelas
     End Function
     Friend Sub ParseTabela(idTabela As Integer, Elemento As HtmlNode, Pessoa As Pessoa)
         Select Case idTabela
-            Case Is = TipoTabela.FichaSintética
+            Case Is = TipoTabela.FichaSintetica
                 ParseTabelaSintetica(Elemento, Pessoa)
-            Case Is = TipoTabela.RelaçãoProcessos
+            Case Is = TipoTabela.RelacaoProcessos
                 ParseTabelaRelaçãoProcessos(Elemento, Pessoa)
             Case Is = TipoTabela.Requerimentos
                 ParseTabelaRequerimentos(Elemento, Pessoa)
-            Case Is = TipoTabela.RelaçõesPrevidenciárias
+            Case Is = TipoTabela.RelacoesPrevidenciarias
                 ParseTabelaRelações(Elemento, Pessoa)
-            Case Is = TipoTabela.Remunerações
+            Case Is = TipoTabela.Remuneracoes
                 ParseTabelaRemunerações(Elemento, Pessoa)
-            Case Is = TipoTabela.CartaConcessão
+            Case Is = TipoTabela.CartaConcessao
                 ParseTabelaCartaConcessão(Elemento, Pessoa)
             Case Is = TipoTabela.HISCRE
                 ParseTabelaHISCRE(Elemento, Pessoa)
@@ -85,13 +85,13 @@ Module parseTabelas
                 End If
             End If
             If linha.SelectSingleNode(".//th").InnerText = "PARTE AUTORA" Then Pessoa.Nome = linha.SelectSingleNode(".//td").InnerText.Trim
-
             If linha.SelectSingleNode(".//th").InnerText = "CPF" Then Pessoa.CPF = linha.SelectSingleNode(".//td").InnerText.Trim
             If linha.SelectSingleNode(".//th").InnerText = "DATA DE NASCIMENTO" Then Pessoa.Nascimento = linha.SelectSingleNode(".//td").InnerText.Trim
             If linha.SelectSingleNode(".//th").InnerText = "ESTADO CIVIL" Then Pessoa.EstadoCivil = linha.SelectSingleNode(".//td").InnerText
-            If linha.SelectSingleNode(".//th").InnerText = "FILIAÇÃO" Then Pessoa.Filiação = linha.SelectSingleNode(".//td").InnerText
-            If linha.SelectSingleNode(".//th").InnerText = "ENDEREÇO PRINCIPAL" Then Pessoa.EndereçoPrincipal = linha.SelectSingleNode(".//td").InnerText
-            If linha.SelectSingleNode(".//th").InnerText = "ENDEREÇO SECUNDÁRIO" Then Pessoa.EndereçoSecundário = linha.SelectSingleNode(".//td").InnerText
+            If linha.SelectSingleNode(".//th").InnerText = "FILIAÇÃO" Then Pessoa.Filiacao = linha.SelectSingleNode(".//td").InnerText
+            If linha.SelectSingleNode(".//th").InnerText = "SEXO" Then Pessoa.Sexo = linha.SelectSingleNode(".//td").InnerText
+            If linha.SelectSingleNode(".//th").InnerText = "ENDEREÇO PRINCIPAL" Then Pessoa.EnderecoPrincipal = linha.SelectSingleNode(".//td").InnerText
+            If linha.SelectSingleNode(".//th").InnerText = "ENDEREÇO SECUNDÁRIO" Then Pessoa.EndereçoSecundario = linha.SelectSingleNode(".//td").InnerText
         Next
     End Sub
     Friend Sub ParseTabelaRelaçãoProcessos(Elemento As HtmlNode, ByRef Pessoa As Pessoa)
@@ -111,7 +111,7 @@ Module parseTabelas
                 Processo.Processo = linha.SelectSingleNode(".//td[1]").InnerText.Trim
                 Processo.Assunto = linha.SelectSingleNode(".//td[2]").InnerText.Trim
                 Processo.Interessados = String.Join("; ", linha.SelectNodes(".//td[3]/table/tr/td").Select(Function(i) i.InnerText.Trim))
-                Processo.OrgãoJulgador = linha.SelectSingleNode(".//td[4]").InnerText.Trim
+                Processo.OrgaoJulgador = linha.SelectSingleNode(".//td[4]").InnerText.Trim
                 Processo.Ajuizamento = linha.SelectSingleNode(".//td[5]").InnerText.Trim
                 Processo.DataAbertura = linha.SelectSingleNode(".//td[6]").InnerText.Trim
                 If novoProcesso Then Pessoa.OutrosProcessos.Add(Processo)
@@ -121,7 +121,7 @@ Module parseTabelas
     Friend Sub ParseTabelaRequerimentos(Elemento As HtmlNode, ByRef Pessoa As Pessoa)
         Dim linhas As HtmlNodeCollection = Elemento.SelectNodes(".//tr")
         For Each linha In linhas
-            Dim benefício As New Benefício
+            Dim benefício As New Beneficio
             Dim benefícionovo As Boolean = True
             If linha.SelectSingleNode(".//th") Is Nothing Then
                 If Not linha.InnerText.Trim.Contains("Não foram encontrados requerimentos em nome do autor") Then
@@ -132,12 +132,12 @@ Module parseTabelas
                     benefício.DCB = linha.SelectSingleNode(".//td[5]").InnerText.Trim
                     benefício.Status = linha.SelectSingleNode(".//td[6]").InnerText.Trim
                     benefício.Motivo = linha.SelectSingleNode(".//td[7]").InnerText.Trim
-                    For Each benef In Pessoa.Benefícios
+                    For Each benef In Pessoa.Beneficios
                         If benef.NB = benefício.NB Then
                             benefícionovo = False
                         End If
                     Next
-                    If benefícionovo Then Pessoa.Benefícios.Add(benefício)
+                    If benefícionovo Then Pessoa.Beneficios.Add(benefício)
                 End If
             End If
         Next
@@ -155,23 +155,33 @@ Module parseTabelas
                 If indicador.SelectSingleNode(".//th") Is Nothing Then
                     Dim oindicador As New Indicador With {
                             .Indicador = indicador.SelectSingleNode(".//td[1]").InnerText.Trim,
-                            .Descrição = indicador.SelectSingleNode(".//td[2]").InnerText.Trim
+                            .Descricao = indicador.SelectSingleNode(".//td[2]").InnerText.Trim
                         }
                     listaindicadores.Add(oindicador)
                 End If
             Next
         End If
         For Each linha In linhas
-            Dim relação As New Vínculo
+            Dim relação As New Vinculo
+            Dim novaRelação As Boolean = True
             If linha.SelectSingleNode(".//th") Is Nothing AndAlso linha.SelectSingleNode(".//td[7]").InnerText.Trim <> "Benefício" Then 'Só puxa os vínculos, ignorando os benefícios
+                Dim sequencial As String = linha.SelectSingleNode(".//td[1]").InnerText.Trim
+                Dim NIT As String = linha.SelectSingleNode(".//td[2]").InnerText.Trim
+                For Each vinc In Pessoa.Vinculos
+                    If sequencial = vinc.Sequencial And NIT = vinc.NIT Then
+                        relação = vinc
+                        novaRelação = False
+                    End If
+                Next
+
                 relação.Sequencial = linha.SelectSingleNode(".//td[1]").InnerText.Trim
                 relação.NIT = linha.SelectSingleNode(".//td[2]").InnerText.Trim
                 relação.Origem = linha.SelectSingleNode(".//td[4]").InnerText.Trim
                 relação.Inicio = linha.SelectSingleNode(".//td[5]").InnerText.Trim
                 relação.Fim = linha.SelectSingleNode(".//td[6]").InnerText.Trim
-                relação.Filiação = linha.SelectSingleNode(".//td[7]").InnerText.Trim
-                relação.Ocupação = linha.SelectSingleNode(".//td[8]").InnerText.Trim
-                relação.ÚltimaRemuneração = linha.SelectSingleNode(".//td[9]").InnerText.Trim
+                relação.Filiacao = linha.SelectSingleNode(".//td[7]").InnerText.Trim
+                relação.Ocupacao = linha.SelectSingleNode(".//td[8]").InnerText.Trim
+                relação.UltimaRemuneracao = linha.SelectSingleNode(".//td[9]").InnerText.Trim
                 Dim relindicador = linha.SelectSingleNode(".//td[10]").InnerText
                 If relindicador <> "" Then
                     relação.Indicadores = New List(Of Indicador)
@@ -186,7 +196,7 @@ Module parseTabelas
 
                 End If
                 relação.CNPJ = linha.SelectSingleNode(".//td[3]").InnerText.Trim
-                Pessoa.Vínculos.Add(relação)
+                If novaRelação Then Pessoa.Vinculos.Add(relação)
             End If
         Next
     End Sub
@@ -198,14 +208,14 @@ Module parseTabelas
             Dim linhasIndicadores As HtmlNodeCollection = tabelaIndicadores.SelectNodes(".//table[1]/tr")
             For Each linha In linhasIndicadores
                 If linha.SelectSingleNode(".//th") IsNot Nothing Then Continue For
-                listaIndicadores.Add(New Indicador With {.Indicador = linha.SelectSingleNode(".//td[1]").InnerText.Trim, .Descrição = linha.SelectSingleNode(".//td[2]").InnerText.Trim})
+                listaIndicadores.Add(New Indicador With {.Indicador = linha.SelectSingleNode(".//td[1]").InnerText.Trim, .Descricao = linha.SelectSingleNode(".//td[2]").InnerText.Trim})
             Next
         End If
 
         For Each vinculo In listavinculos
             Dim relaçãonova As Boolean = False, benefícionovo As Boolean = False
-            Dim relação As Vínculo
-            Dim benefício As Benefício
+            Dim relação As Vinculo
+            Dim benefício As Beneficio
 
             If vinculo.SelectSingleNode(".//th") IsNot Nothing Then Continue For
 
@@ -213,7 +223,7 @@ Module parseTabelas
 
             If Colunas < 10 Then 'Não é benefício, é vínculo
                 Dim sequencial As Integer = vinculo.SelectSingleNode(".//td[1]").InnerText
-                For Each rel In Pessoa.Vínculos
+                For Each rel In Pessoa.Vinculos
                     If rel.Sequencial = sequencial Then
                         relação = rel
                         Exit For
@@ -221,7 +231,7 @@ Module parseTabelas
                 Next
 
                 If relação Is Nothing Then
-                    relação = New Vínculo
+                    relação = New Vinculo
                     relaçãonova = True
                 End If
                 Dim listaremunerações As HtmlNode = vinculo.ParentNode.ParentNode.SelectSingleNode(".//center/b[1]")
@@ -230,86 +240,132 @@ Module parseTabelas
                     If listaremunerações.InnerText = "Lista de Remunerações" Then
                         tabelaremunerações = listaremunerações.ParentNode.SelectNodes(".//table[2]/tr")
                         For Each trremuneração In tabelaremunerações
-                            If relação.Remunerações Is Nothing Then relação.Remunerações = New List(Of Remuneração)
-                            Dim remuneração As New Remuneração With {
-                                       .Competência = trremuneração.SelectSingleNode(".//td[1]").InnerText,
-                                        .Remuneração = trremuneração.SelectSingleNode(".//td[3]").InnerText
-                                   }
+
+                            'If relação.Remuneracoes Is Nothing Then relação.Remuneracoes = New List(Of Remuneracao)
+                            Dim novaremuneração As Boolean = True
+                            Dim remuneração As New Remuneracao
+                            Dim competencia As String = trremuneração.SelectSingleNode(".//td[1]").InnerText
+                            Dim remuneracao As String = trremuneração.SelectSingleNode(".//td[3]").InnerText
+                            For Each remunera In relação.Remuneracoes
+                                If remunera.Competencia = competencia And remuneracao = remunera.Remuneracao Then
+                                    remuneração = remunera
+                                    novaremuneração = False
+                                End If
+                            Next
+                            With remuneração
+                                .Competencia = trremuneração.SelectSingleNode(".//td[1]").InnerText
+                                .Remuneracao = trremuneração.SelectSingleNode(".//td[3]").InnerText
+                            End With
                             If trremuneração.SelectSingleNode(".//td[4]").InnerText.Trim <> "" Then
                                 For Each indicador In listaIndicadores
                                     Dim indicadoresremuneração = Split(Replace(trremuneração.SelectSingleNode(".//td[4]").InnerText.Trim, ",", ""), " ")
                                     For i = 0 To indicadoresremuneração.Length - 1
                                         If indicador.Indicador = indicadoresremuneração(i) Then
-                                            remuneração.Indicadores.Add(indicador)
+                                            If Not remuneração.Indicadores.Contains(indicador) Then remuneração.Indicadores.Add(indicador)
                                         End If
                                     Next
                                 Next
                             End If
-                            relação.Remunerações.Add(remuneração)
+                            If novaremuneração Then relação.Remuneracoes.Add(remuneração)
+
+
                             If trremuneração.SelectSingleNode(".//td[5]") IsNot Nothing Then
-                                remuneração = New Remuneração With {
-                                           .Competência = trremuneração.SelectSingleNode(".//td[5]").InnerText,
-                                           .Remuneração = trremuneração.SelectSingleNode(".//td[7]").InnerText
-                                        }
+                                novaremuneração = True
+                                remuneração = New Remuneracao
+                                competencia = trremuneração.SelectSingleNode(".//td[5]").InnerText
+                                remuneracao = trremuneração.SelectSingleNode(".//td[7]").InnerText
+                                For Each remunera In relação.Remuneracoes
+                                    If remunera.Competencia = competencia And remuneracao = remunera.Remuneracao Then
+                                        remuneração = remunera
+                                        novaremuneração = False
+                                    End If
+                                Next
+                                With remuneração
+                                    .Competencia = trremuneração.SelectSingleNode(".//td[5]").InnerText
+                                    .Remuneracao = trremuneração.SelectSingleNode(".//td[7]").InnerText
+                                End With
                                 If trremuneração.SelectSingleNode(".//td[8]").InnerText.Trim <> "" Then
                                     For Each indicador In listaIndicadores
                                         Dim indicadoresremuneração = Split(Replace(trremuneração.SelectSingleNode(".//td[8]").InnerText.Trim, ",", ""), " ")
                                         For i = 0 To indicadoresremuneração.Length - 1
                                             If indicador.Indicador = indicadoresremuneração(i) Then
-                                                remuneração.Indicadores.Add(indicador)
+                                                If Not remuneração.Indicadores.Contains(indicador) Then remuneração.Indicadores.Add(indicador)
                                             End If
                                         Next
                                     Next
                                 End If
-                                relação.Remunerações.Add(remuneração)
+
+                                If novaremuneração Then relação.Remuneracoes.Add(remuneração)
                             End If
 
                         Next
                     ElseIf listaremunerações.InnerText = "Lista de Recolhimentos" Then
                         tabelaremunerações = listaremunerações.ParentNode.ParentNode.ParentNode.SelectNodes(".//table[2]/tr")
                         For Each trremuneração In tabelaremunerações
-                            If relação.Recolhimentos Is Nothing Then relação.Recolhimentos = New List(Of Recolhimento)
-                            Dim remuneração As New Recolhimento With {
-                                       .Competência = trremuneração.SelectSingleNode(".//td[1]").InnerText,
-                                        .DataPagamento = trremuneração.SelectSingleNode(".//td[2]").InnerText,
-                                        .Contribuição = trremuneração.SelectSingleNode(".//td[3]").InnerText,
-                                        .SalárioContribuição = trremuneração.SelectSingleNode(".//td[4]").InnerText
-                                   }
+                            'If relação.Recolhimentos Is Nothing Then relação.Recolhimentos = New List(Of Recolhimento)
+                            Dim novaremuneração As Boolean = True
+                            Dim remuneração As New Recolhimento
+                            Dim competencia As String = trremuneração.SelectSingleNode(".//td[1]").InnerText
+                            Dim dataPagamento As String = trremuneração.SelectSingleNode(".//td[2]").InnerText
+                            Dim contribuicao As String = trremuneração.SelectSingleNode(".//td[3]").InnerText
+                            For Each remunera In relação.Recolhimentos
+                                If remunera.Competencia = competencia And contribuicao = remunera.Contribuicao And dataPagamento = remunera.DataPagamento Then
+                                    remuneração = remunera
+                                    novaremuneração = False
+                                End If
+                            Next
+
+                            With remuneração
+                                .Competencia = trremuneração.SelectSingleNode(".//td[1]").InnerText
+                                .DataPagamento = trremuneração.SelectSingleNode(".//td[2]").InnerText
+                                .Contribuicao = trremuneração.SelectSingleNode(".//td[3]").InnerText
+                                .SalarioContribuicao = trremuneração.SelectSingleNode(".//td[4]").InnerText
+                            End With
                             If trremuneração.SelectSingleNode(".//td[5]").InnerText.Trim <> "" Then
                                 For Each indicador In listaIndicadores
                                     Dim indicadoresremuneração = Split(Replace(trremuneração.SelectSingleNode(".//td[5]").InnerText.Trim, ",", ""), " ")
                                     For i = 0 To indicadoresremuneração.Length - 1
                                         If indicador.Indicador = indicadoresremuneração(i) Then
-                                            remuneração.Indicadores.Add(indicador)
+                                            If Not remuneração.Indicadores.Contains(indicador) Then remuneração.Indicadores.Add(indicador)
                                         End If
                                     Next
                                 Next
                             End If
-                            relação.Recolhimentos.Add(remuneração)
+                            If novaremuneração Then relação.Recolhimentos.Add(remuneração)
                             If trremuneração.SelectSingleNode(".//td[6]") IsNot Nothing Then
-                                remuneração = New Recolhimento With {
-                                           .Competência = trremuneração.SelectSingleNode(".//td[6]").InnerText,
-                                           .DataPagamento = trremuneração.SelectSingleNode(".//td[7]").InnerText,
-                                           .Contribuição = trremuneração.SelectSingleNode(".//td[8]").InnerText,
-                                           .SalárioContribuição = trremuneração.SelectSingleNode(".//td[9]").InnerText
-                                        }
+                                novaremuneração = True
+                                remuneração = New Recolhimento
+                                competencia = trremuneração.SelectSingleNode(".//td[6]").InnerText
+                                dataPagamento = trremuneração.SelectSingleNode(".//td[7]").InnerText
+                                contribuicao = trremuneração.SelectSingleNode(".//td[8]").InnerText
+                                For Each remunera In relação.Recolhimentos
+                                    If remunera.Competencia = competencia And contribuicao = remunera.Contribuicao And dataPagamento = remunera.DataPagamento Then
+                                        remuneração = remunera
+                                        novaremuneração = False
+                                    End If
+                                Next
+
+                                With remuneração
+                                    .Competencia = trremuneração.SelectSingleNode(".//td[6]").InnerText
+                                    .DataPagamento = trremuneração.SelectSingleNode(".//td[7]").InnerText
+                                    .Contribuicao = trremuneração.SelectSingleNode(".//td[8]").InnerText
+                                    .SalarioContribuicao = trremuneração.SelectSingleNode(".//td[9]").InnerText
+                                End With
                                 If trremuneração.SelectSingleNode(".//td[10]").InnerText.Trim <> "" Then
                                     For Each indicador In listaIndicadores
                                         Dim indicadoresremuneração = Split(Replace(trremuneração.SelectSingleNode(".//td[10]").InnerText.Trim, ",", ""), " ")
                                         For i = 0 To indicadoresremuneração.Length - 1
                                             If indicador.Indicador = indicadoresremuneração(i) Then
-                                                remuneração.Indicadores.Add(indicador)
+                                                If Not remuneração.Indicadores.Contains(indicador) Then remuneração.Indicadores.Add(indicador)
                                             End If
                                         Next
                                     Next
                                 End If
-                                relação.Recolhimentos.Add(remuneração)
+                                If novaremuneração Then relação.Recolhimentos.Add(remuneração)
                             End If
 
                         Next
                     End If
-
-
                 End If
                 If relaçãonova = True Then
                     relação.Sequencial = vinculo.SelectSingleNode(".//table/tr[2]/td[1]").InnerText.Trim
@@ -318,11 +374,11 @@ Module parseTabelas
                         relação.Origem = vinculo.SelectSingleNode(".//table/tr[2]/td[3]").InnerText.Trim
                         relação.Inicio = vinculo.SelectSingleNode(".//table/tr[2]/td[4]").InnerText.Trim
                         relação.Fim = vinculo.SelectSingleNode(".//table/tr[2]/td[5]").InnerText.Trim
-                        relação.Filiação = vinculo.SelectSingleNode(".//table/tr[2]/td[6]").InnerText.Trim
-                        relação.ÚltimaRemuneração = vinculo.SelectSingleNode(".//table/tr[2]/td[7]").InnerText.Trim
+                        relação.Filiacao = vinculo.SelectSingleNode(".//table/tr[2]/td[6]").InnerText.Trim
+                        relação.UltimaRemuneracao = vinculo.SelectSingleNode(".//table/tr[2]/td[7]").InnerText.Trim
                         relação.Indicadores.Add(New Indicador With {.Indicador = vinculo.SelectSingleNode(".//table/tr[2]/td[1]").InnerText.Trim})
                     End If
-                    Pessoa.Vínculos.Add(relação)
+                    Pessoa.Vinculos.Add(relação)
                 End If
             Else 'Não é vínculo, é benefício
                 Dim tabelasbenefício As HtmlNodeCollection = vinculo.ParentNode.ParentNode.SelectNodes(".//table")
@@ -335,14 +391,14 @@ Module parseTabelas
                     dadosbenef3 = tabelasbenefício.Item(2)
                 End If
                 Dim NB As String = dadosBenef1.SelectSingleNode(".//tr[2]/td[2]").InnerText.Trim
-                For Each rel In Pessoa.Benefícios
+                For Each rel In Pessoa.Beneficios
                     If rel.NB = NB Then
                         benefício = rel
                         Exit For
                     End If
                 Next
                 If benefício Is Nothing Then
-                    benefício = New Benefício
+                    benefício = New Beneficio
                     benefícionovo = True
                 End If
                 benefício.Sequencial = dadosBenef1.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim
@@ -353,7 +409,7 @@ Module parseTabelas
 
                 If dadosBenef1.SelectSingleNode(".//tr[2]/td[6]").InnerText.Trim = "INDEFERIDO" Then
                     benefício.Status = dadosBenef1.SelectSingleNode(".//tr[2]/td[6]").InnerText.Trim
-                    benefício.Filiação = dadosBenef1.SelectSingleNode(".//tr[2]/td[7]").InnerText.Trim
+                    benefício.Filiacao = dadosBenef1.SelectSingleNode(".//tr[2]/td[7]").InnerText.Trim
                     benefício.RamoAtividade = dadosBenef1.SelectSingleNode(".//tr[2]/td[8]").InnerText.Trim
                     benefício.Motivo = HtmlDecode(dadosBenef1.SelectSingleNode(".//tr[2]/td[9]").InnerText.Trim)
                     benefício.APSRequerimento = dadosBenef1.SelectSingleNode(".//tr[2]/td[10]").InnerText.Trim
@@ -370,41 +426,41 @@ Module parseTabelas
                     benefício.RMA = dadosbenef2.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim
                     benefício.DAT = dadosbenef2.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim
                     benefício.DataNBAnterior = dadosbenef2.SelectSingleNode(".//tr[2]/td[6]").InnerText.Trim
-                    benefício.DataÓbito = dadosbenef2.SelectSingleNode(".//tr[2]/td[7]").InnerText.Trim
+                    benefício.DataObito = dadosbenef2.SelectSingleNode(".//tr[2]/td[7]").InnerText.Trim
                     benefício.IRT = Replace(dadosbenef2.SelectSingleNode(".//tr[2]/td[8]").InnerText, ".", ",").Trim
                     benefício.Indice1298 = dadosbenef2.SelectSingleNode(".//tr[2]/td[9]").InnerText.Trim
                     benefício.Indice0104 = dadosbenef2.SelectSingleNode(".//tr[2]/td[10]").InnerText.Trim
-                    benefício.Filiação = dadosbenef3.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim
+                    benefício.Filiacao = dadosbenef3.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim
                     benefício.RamoAtividade = dadosbenef3.SelectSingleNode(".//tr[2]/td[2]").InnerText.Trim
-                    benefício.NaturezaOcupação = dadosbenef3.SelectSingleNode(".//tr[2]/td[3]").InnerText.Trim
-                    benefício.TipoConcessão = dadosbenef3.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim
+                    benefício.NaturezaOcupacao = dadosbenef3.SelectSingleNode(".//tr[2]/td[3]").InnerText.Trim
+                    benefício.TipoConcessao = dadosbenef3.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim
                     benefício.Tratamento = dadosbenef3.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim
                     benefício.DRD = dadosbenef3.SelectSingleNode(".//tr[2]/td[6]").InnerText.Trim
                     benefício.APSConcessora = dadosbenef3.SelectSingleNode(".//tr[2]/td[7]").InnerText.Trim
                     benefício.APSMantenedora = dadosbenef3.SelectSingleNode(".//tr[2]/td[8]").InnerText.Trim
                 End If
-                If benefícionovo Then Pessoa.Benefícios.Add(benefício)
+                If benefícionovo Then Pessoa.Beneficios.Add(benefício)
             End If
         Next
     End Sub
     Friend Sub ParseTabelaCartaConcessão(Elemento As HtmlNode, Pessoa As Pessoa)
         Dim ListaBenefícios As HtmlNodeCollection = Elemento.SelectNodes(".//div[@id='div_hiscre']")
         For Each benefHISCRE In ListaBenefícios
-            Dim benefício As Benefício
-            Dim carta As New CartaConcessão
+            Dim benefício As Beneficio
+            Dim carta As New CartaConcessao
             Dim benefícionovo As Boolean = False
             If benefHISCRE.SelectSingleNode(".//center") Is Nothing Then 'Se não tem "Center", não tem carta de concessão
                 Continue For
             End If
             Dim Seq As Integer = benefHISCRE.SelectSingleNode(".//center/table[1]/tr[2]/td[1]").InnerText.Trim
-            For Each benef In Pessoa.Benefícios
+            For Each benef In Pessoa.Beneficios
                 If benef.Sequencial = Seq Then
                     benefício = benef
                     Exit For
                 End If
             Next
             If benefício Is Nothing Then
-                benefício = New Benefício
+                benefício = New Beneficio
                 benefícionovo = True
             End If
             Dim resumo As HtmlNode
@@ -424,61 +480,61 @@ Module parseTabelas
                 If listaSalários IsNot Nothing Then
                     For Each salário In listaSalários
                         If salário.SelectNodes(".//th") Is Nothing Then
-                            Dim salcon As New SalárioConcessão With {
+                            Dim salcon As New SalarioConcessao With {
                             .Sequencial = salário.SelectSingleNode(".//td[1]").InnerText.Trim,
-                            .Competência = salário.SelectSingleNode(".//td[2]").InnerText.Trim,
-                            .Salário = salário.SelectSingleNode(".//td[3]").InnerText.Trim,
-                            .Índice = salário.SelectSingleNode(".//td[4]").InnerText.Trim,
+                            .Competencia = salário.SelectSingleNode(".//td[2]").InnerText.Trim,
+                            .Salario = salário.SelectSingleNode(".//td[3]").InnerText.Trim,
+                            .Indice = salário.SelectSingleNode(".//td[4]").InnerText.Trim,
                             .Corrigido = salário.SelectSingleNode(".//td[5]").InnerText.Trim,
-                            .Observação = salário.SelectSingleNode(".//td[6]").InnerText.Trim
+                            .Observacao = salário.SelectSingleNode(".//td[6]").InnerText.Trim
                         }
-                            carta.Salários.Add(salcon)
+                            carta.Salarios.Add(salcon)
                             If salário.SelectSingleNode(".//td[7]") IsNot Nothing Then
-                                salcon = New SalárioConcessão With {
+                                salcon = New SalarioConcessao With {
                                 .Sequencial = salário.SelectSingleNode(".//td[7]").InnerText.Trim,
-                                .Competência = salário.SelectSingleNode(".//td[8]").InnerText.Trim,
-                                .Salário = salário.SelectSingleNode(".//td[9]").InnerText.Trim,
-                                .Índice = salário.SelectSingleNode(".//td[10]").InnerText.Trim,
+                                .Competencia = salário.SelectSingleNode(".//td[8]").InnerText.Trim,
+                                .Salario = salário.SelectSingleNode(".//td[9]").InnerText.Trim,
+                                .Indice = salário.SelectSingleNode(".//td[10]").InnerText.Trim,
                                 .Corrigido = salário.SelectSingleNode(".//td[11]").InnerText.Trim,
-                               .Observação = salário.SelectSingleNode(".//td[12]").InnerText.Trim
+                               .Observacao = salário.SelectSingleNode(".//td[12]").InnerText.Trim
                             }
-                                carta.Salários.Add(salcon)
+                                carta.Salarios.Add(salcon)
                             End If
                         End If
                     Next
                 End If
             End If
-            If benefícionovo = False Then benefício.CartaConcessão = carta
+            If benefícionovo = False Then benefício.CartaConcessao = carta
         Next
     End Sub
     Friend Sub ParseTabelaHISCRE(Elemento As HtmlNode, Pessoa As Pessoa)
         Dim ListaBenefícios As HtmlNodeCollection = Elemento.SelectNodes(".//div[@id='div_hiscre']")
         For Each benefHISCRE In ListaBenefícios
-            Dim benefício As Benefício
+            Dim benefício As Beneficio
             If benefHISCRE.SelectSingleNode(".//center") Is Nothing Then 'Se não tem "Center", não tem HISCRE
                 Continue For
             End If
             Dim benefícionovo As Boolean = False
             Dim seq As Integer = benefHISCRE.SelectSingleNode(".//center/table[1]/tr[2]/td[1]").InnerText.Trim
-            For Each benef In Pessoa.Benefícios
+            For Each benef In Pessoa.Beneficios
                 If benef.Sequencial = seq Then
                     benefício = benef
                     Exit For
                 End If
             Next
             If benefício Is Nothing Then
-                benefício = New Benefício
+                benefício = New Beneficio
                 benefícionovo = True
             End If
             Dim listaCréditos As HtmlNodeCollection = benefHISCRE.SelectNodes(".//center/table[2]/tr")
             For Each linha In listaCréditos
                 If linha.GetAttributeValue("style", "") = "border-bottom: 1px #ccc solid;" Then
                     Dim Histórico As New HISCRE With {
-                            .Competência = linha.SelectSingleNode(".//td[1]").InnerText.Trim,
-                            .Líquido = linha.SelectSingleNode(".//td[3]").InnerText.Trim,
+                            .Competencia = linha.SelectSingleNode(".//td[1]").InnerText.Trim,
+                            .Liquido = linha.SelectSingleNode(".//td[3]").InnerText.Trim,
                             .Meio = linha.SelectSingleNode(".//td[4]").InnerText.Trim,
                             .Status = linha.SelectSingleNode(".//td[5]").InnerText.Trim,
-                            .Previsão = linha.SelectSingleNode(".//td[6]").InnerText.Trim,
+                            .Previsao = linha.SelectSingleNode(".//td[6]").InnerText.Trim,
                             .Pagamento = linha.SelectSingleNode(".//td[7]").InnerText.Trim,
                             .Invalidado = parseBool(linha.SelectSingleNode(".//td[8]").InnerText.Trim),
                             .Isento = parseBool(linha.SelectSingleNode(".//td[9]").InnerText.Trim)
@@ -492,21 +548,21 @@ Module parseTabelas
                     Dim TotalDescontos As Double = 0
                     For Each rubrica In rubricas
                         If rubrica.SelectSingleNode(".//th") Is Nothing AndAlso rubrica.SelectSingleNode(".//td[1]").InnerText.Trim <> "" Then
-                            Dim valores As New Crédito With {
+                            Dim valores As New Credito With {
                                     .Rubrica = rubrica.SelectSingleNode(".//td[1]").InnerText.Trim,
-                                    .Descrição = rubrica.SelectSingleNode(".//td[2]").InnerText.Trim,
+                                    .Descricao = rubrica.SelectSingleNode(".//td[2]").InnerText.Trim,
                                     .Valor = rubrica.SelectSingleNode(".//td[3]").InnerText.Trim
                                 }
                             If valores.Rubrica > 100 And valores.Rubrica < 200 Then Total += valores.Valor
                             If valores.Rubrica > 200 And valores.Rubrica < 300 Then TotalDescontos += valores.Valor
                             If valores.Rubrica = 101 Then Histórico.MR = valores.Valor
-                            Histórico.Créditos.Add(valores)
+                            Histórico.Creditos.Add(valores)
                         End If
                     Next
                     Histórico.Bruto = Math.Round(Total, 2)
                     Histórico.Descontos = TotalDescontos
                     benefício.HISCRE.Add(Histórico)
-                    If benefícionovo Then Pessoa.Benefícios.Add(benefício)
+                    If benefícionovo Then Pessoa.Beneficios.Add(benefício)
                 End If
             Next
         Next
@@ -531,17 +587,17 @@ Module parseTabelas
 
         For Each Laudo In ListaLaudos
             Dim NovoLaudo As New Laudo
-            Dim benefício As Benefício
+            Dim benefício As Beneficio
             Dim benefícionovo As Boolean = False
             Dim NB As String = Laudo.SelectSingleNode(".//table[1]/tr[2]/td[2]").InnerText.Trim
-            For Each benef In Pessoa.Benefícios
+            For Each benef In Pessoa.Beneficios
                 If benef.NB = NB Then
                     benefício = benef
                     Exit For
                 End If
             Next
             If benefício Is Nothing Then
-                benefício = New Benefício
+                benefício = New Beneficio
                 benefícionovo = True
             End If
             Dim tabelasLaudo As HtmlNodeCollection = Laudo.SelectNodes(".//table")
@@ -554,10 +610,10 @@ Module parseTabelas
                 dadosLaudo3 = tabelasLaudo.Item(2)
             End If
 
-            NovoLaudo.Benefício = dadosLaudo.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim
+            NovoLaudo.Beneficio = dadosLaudo.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim
             NovoLaudo.NB = dadosLaudo.SelectSingleNode(".//tr[2]/td[2]").InnerText.Trim
             NovoLaudo.Requerimento = dadosLaudo.SelectSingleNode(".//tr[2]/td[3]").InnerText.Trim
-            NovoLaudo.Ocupação = dadosLaudo.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim
+            NovoLaudo.Ocupacao = dadosLaudo.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim
             NovoLaudo.DataExame = dadosLaudo.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim
             NovoLaudo.DER = dadosLaudo2.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim
             NovoLaudo.DIB = dadosLaudo2.SelectSingleNode(".//tr[2]/td[2]").InnerText.Trim
@@ -565,26 +621,26 @@ Module parseTabelas
             NovoLaudo.DII = dadosLaudo2.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim
             NovoLaudo.DCB = dadosLaudo2.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim
             NovoLaudo.CID = dadosLaudo2.SelectSingleNode(".//tr[2]/td[6]").InnerText.Trim
-            NovoLaudo.EncaminhaReabilitação = parseBool(dadosLaudo3.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim)
+            NovoLaudo.EncaminhaReabilitacao = parseBool(dadosLaudo3.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim)
             NovoLaudo.AcidenteTrabalho = parseBool(dadosLaudo3.SelectSingleNode(".//tr[2]/td[2]").InnerText.Trim)
             NovoLaudo.AuxilioAcidente = dadosLaudo3.SelectSingleNode(".//tr[2]/td[3]").InnerText.Trim
-            NovoLaudo.IsençãoCarencia = parseBool(dadosLaudo3.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim)
-            NovoLaudo.SugestãoLI = parseBool(dadosLaudo3.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim)
-            NovoLaudo.Histórico = Laudo.SelectSingleNode(".//p[1]").InnerText.Trim
-            NovoLaudo.ExameFísico = Laudo.SelectSingleNode(".//p[2]").InnerText.Trim
-            NovoLaudo.Considerações = Laudo.SelectSingleNode(".//p[3]").InnerText.Trim
+            NovoLaudo.IsencaoCarencia = parseBool(dadosLaudo3.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim)
+            NovoLaudo.SugestaoLI = parseBool(dadosLaudo3.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim)
+            NovoLaudo.Historico = Laudo.SelectSingleNode(".//p[1]").InnerText.Trim
+            NovoLaudo.ExameFisico = Laudo.SelectSingleNode(".//p[2]").InnerText.Trim
+            NovoLaudo.Consideracoes = Laudo.SelectSingleNode(".//p[3]").InnerText.Trim
             NovoLaudo.Resultado = Laudo.SelectSingleNode(".//p[4]").InnerText.Trim
             If benefícionovo Then
                 benefício.NB = NovoLaudo.NB
                 benefício.DER = NovoLaudo.DER
                 benefício.DIB = NovoLaudo.DIB
                 benefício.DCB = NovoLaudo.DCB
-                benefício.NaturezaOcupação = NovoLaudo.Ocupação
+                benefício.NaturezaOcupacao = NovoLaudo.Ocupacao
             End If
 
 
             benefício.Laudos.Add(NovoLaudo)
-            If benefícionovo Then Pessoa.Benefícios.Add(benefício)
+            If benefícionovo Then Pessoa.Beneficios.Add(benefício)
             benefício = Nothing
 
         Next
