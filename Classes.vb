@@ -366,7 +366,6 @@ Namespace Minerador
                 Return False
             End If
         End Function
-
     End Class
     Public Class Remuneracao
         Public Property Competencia As String

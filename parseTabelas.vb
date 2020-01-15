@@ -229,7 +229,6 @@ Module parseTabelas
                         Exit For
                     End If
                 Next
-
                 If relação Is Nothing Then
                     relação = New Vinculo
                     relaçãonova = True
