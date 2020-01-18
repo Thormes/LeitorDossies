@@ -98,23 +98,14 @@ Module parseTabelas
         Dim linhas As HtmlNodeCollection = Elemento.SelectNodes(".//tr")
         For Each linha In linhas
             Dim Processo As New OutroProcesso
-            Dim novoProcesso As Boolean = True
             If linha.SelectSingleNode(".//th") Is Nothing AndAlso linha.ParentNode.ParentNode.Name <> "td" And linha.ChildNodes.Count > 3 Then
-                Dim nProcesso As String = linha.SelectSingleNode(".//td[1]").InnerText.Trim
-                For Each proc In Pessoa.OutrosProcessos
-                    If proc.Processo = nProcesso Then
-                        Processo = proc
-                        novoProcesso = False
-                    End If
-                Next
-
                 Processo.Processo = linha.SelectSingleNode(".//td[1]").InnerText.Trim
                 Processo.Assunto = linha.SelectSingleNode(".//td[2]").InnerText.Trim
                 Processo.Interessados = String.Join("; ", linha.SelectNodes(".//td[3]/table/tr/td").Select(Function(i) i.InnerText.Trim))
                 Processo.OrgaoJulgador = linha.SelectSingleNode(".//td[4]").InnerText.Trim
                 Processo.Ajuizamento = linha.SelectSingleNode(".//td[5]").InnerText.Trim
                 Processo.DataAbertura = linha.SelectSingleNode(".//td[6]").InnerText.Trim
-                If novoProcesso Then Pessoa.OutrosProcessos.Add(Processo)
+                If Not Pessoa.OutrosProcessos.Contains(Processo) Then Pessoa.OutrosProcessos.Add(Processo)
             End If
         Next
     End Sub
@@ -131,7 +122,7 @@ Module parseTabelas
                     benefício.DIB = linha.SelectSingleNode(".//td[4]").InnerText.Trim
                     benefício.DCB = linha.SelectSingleNode(".//td[5]").InnerText.Trim
                     benefício.Status = linha.SelectSingleNode(".//td[6]").InnerText.Trim
-                    benefício.Motivo = linha.SelectSingleNode(".//td[7]").InnerText.Trim
+                    benefício.Motivo = HtmlDecode(linha.SelectSingleNode(".//td[7]").InnerText.Trim)
                     For Each benef In Pessoa.Beneficios
                         If benef.NB = benefício.NB Then
                             benefícionovo = False
@@ -189,7 +180,7 @@ Module parseTabelas
                         Dim indicadoresvinculo = Split(Replace(relindicador.Trim, ",", ""), " ")
                         For i = 0 To indicadoresvinculo.Length - 1
                             If indicador.Indicador = indicadoresvinculo(i) Then
-                                relação.Indicadores.Add(indicador)
+                                If Not relação.Indicadores.Contains(indicador) Then relação.Indicadores.Add(indicador)
                             End If
                         Next
                     Next

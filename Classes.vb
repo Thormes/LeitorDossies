@@ -66,87 +66,13 @@ Namespace Minerador
                             listaTabelas.Add(teste.IdTabela)
                         End If
                     Next
-                    CalculaTempoContribuicao()
+                    CalculaTempoContribuicao(Pessoa)
                     ProcessaBeneficios()
                 Catch ex As Exception
                     Sucesso = False
                     Mensagem &= Environment.NewLine & "Erro ao realizar a leitura do Dossiê: " & ex.StackTrace
                 End Try
             End If
-
-        End Sub
-        ''' <summary>
-        ''' Calcula o tempo de contribuição do segurado, utilizando como parâmetro os vínculos empregatícios detectados nos dossiês
-        ''' A contagem leva em consideração ano de 360 dias e mês de 30 dias. Período concomitante é computado apenas uma única vez
-        ''' </summary>
-        Friend Sub CalculaTempoContribuicao()
-            Dim TotalDeDias As Integer
-            For Each vinc In Autor.Vinculos
-                If vinc.Fim <> "" OrElse vinc.UltimaRemuneracao <> "" Then 'Se tem data final ou última remuneração
-                    Dim DataInicial As Date = CDate(vinc.Inicio)
-                    Dim DataFinal As Date
-                    If vinc.Fim = "" Then
-                        DataFinal = CDate(vinc.UltimaRemuneracao)
-                        DataFinal = DateSerial(DataFinal.Year, DataFinal.Month, DateTime.DaysInMonth(DataFinal.Year, DataFinal.Month))
-                    Else
-                        DataFinal = CDate(vinc.Fim)
-                    End If
-
-                    Dim InicialAbsorvido As Boolean = False
-                    Dim FinalAbsorvido As Boolean = False
-
-                    For Each vinc2 In Autor.Vinculos 'Análise se o vínculo é concomitante com outros, para fins de contagem do tempo de serviço
-
-                        If vinc.Sequencial <> vinc2.Sequencial Then 'Se não é o mesmo vínculo
-                            Dim DataInicial2 As Date = CDate(vinc2.Inicio)
-                            Dim DataFinal2 As Date
-                            If vinc2.Fim = "" Then
-                                DataFinal2 = CDate(vinc2.UltimaRemuneracao)
-                                DataFinal2 = DateSerial(DataFinal2.Year, DataFinal2.Month, DateTime.DaysInMonth(DataFinal2.Year, DataFinal2.Month))
-                            Else
-                                DataFinal2 = CDate(vinc2.Fim)
-                            End If
-                            If DataInicial >= DataInicial2 AndAlso DataInicial < DataFinal2 Then
-                                InicialAbsorvido = True
-                                If DataFinal <= DataFinal2 Then
-                                    DataInicial = DataFinal
-                                Else
-                                    DataInicial = DataFinal2
-                                End If
-                            End If
-                            If DataFinal <= DataFinal2 AndAlso DataFinal > DataInicial2 Then
-                                FinalAbsorvido = True
-                                If DataInicial >= DataInicial2 Then
-                                    DataFinal = DataInicial
-                                Else
-                                    DataFinal = DataInicial2
-                                End If
-                            End If
-                        End If
-                    Next
-
-                    'Dim Dias As Integer = DateDiff(DateInterval.Day, CDate(vinc.Inicio), CDate(vinc.Fim)) - 1
-                    Dim Dias As Integer
-                    If InicialAbsorvido And FinalAbsorvido Then
-                        Dias = 0
-                    Else
-                        Dias = Dias360(DataInicial, DataFinal, True) + 1
-                    End If
-                    Dim Anos As Integer = Math.Floor(Dias / 360)
-                    Dim Meses As Integer = Math.Floor((Dias Mod 360) / 30)
-                    Dim DiasRestantes As Integer = (Dias Mod 360) Mod 30
-                    vinc.Anos = Anos
-                    vinc.Dias = DiasRestantes
-                    vinc.Meses = Meses
-                    vinc.DiasTotais = Dias
-                    TotalDeDias += Dias
-                End If
-            Next
-            Autor.TotalDias = TotalDeDias
-            Dim AnosTotais As Integer = Math.Floor(TotalDeDias / 360)
-            Dim MesesTotais As Integer = Math.Floor((TotalDeDias Mod 360) / 30)
-            Dim DiasTotaisRestantes As Integer = (TotalDeDias Mod 360) Mod 30
-            Autor.TempoContribuicao = String.Format("{0} Anos, {1} Meses e {2} Dias", AnosTotais, MesesTotais, DiasTotaisRestantes)
 
         End Sub
         ''' <summary>
@@ -157,15 +83,16 @@ Namespace Minerador
             Dim benefIndeferido As Beneficio
             Dim benefMensalidade As Beneficio
             Dim benefAtivo As New List(Of Beneficio)
+            'Autor.Beneficios.Sort(Function(x, y) CDate(x.DER).CompareTo(CDate(y.DER)))
             For Each benef In Autor.Beneficios
                 If benef.Status IsNot Nothing Then
-                    If benef.Status = "INDEFERIDO" Then
+                    If benef.Status = "INDEFERIDO" And benef.DER.Length = 10 Then
                         If benefIndeferido Is Nothing Then
                             benefIndeferido = benef
                         Else
                             If CDate(benefIndeferido.DER) < CDate(benef.DER) Then benefIndeferido = benef
                         End If
-                    ElseIf benef.Status = "CESSADO" Then
+                    ElseIf benef.Status = "CESSADO" And benef.DCB.Length = 10 Then
                         If benefCessado Is Nothing Then
                             benefCessado = benef
                         Else
@@ -174,13 +101,13 @@ Namespace Minerador
                     ElseIf benef.Status = "ATIVO" Then
                         benefAtivo.Add(benef)
                     ElseIf benef.Status.Contains("RECEBENDO MENSALIDADE") Then
-                        If benefMensalidade Is Nothing Then
+                        If benefMensalidade Is Nothing And benef.DCB.Length = 10 Then
                             benefMensalidade = benef
                         Else
                             If CDate(benefMensalidade.DCB) < CDate(benef.DCB) Then benefMensalidade = benef
                         End If
                     End If
-                    benef.CalculaTempoContribuicao(benef.DER, Autor)
+                    If benef.DER.Length = 10 Then CalculaTempoContribuicao(Autor, benef)
                 End If
             Next
             If benefCessado IsNot Nothing Then Autor.UltimoBeneficioCessado = benefCessado
@@ -196,7 +123,15 @@ Namespace Minerador
         Public Property OrgaoJulgador As String
         Public Property Ajuizamento As String
         Public Property DataAbertura As String
+        Public Overrides Function Equals(obj As Object) As Boolean
+            Dim p As OutroProcesso = DirectCast(obj, OutroProcesso)
+            If (p.Processo = Me.Processo) Then
+                Return True
+            Else
+                Return False
+            End If
 
+        End Function
     End Class
     Public Class Pessoa
         Public Property Nome As String
@@ -255,91 +190,6 @@ Namespace Minerador
         Public Property CartaConcessao As CartaConcessao
         Public Property Laudos As New List(Of Laudo)
         Public Property HISCRE As New List(Of HISCRE)
-        ''' <summary>
-        ''' Calcula o tempo de contribuição do segurado até a DER do benefício. Considerandos apenas os vínculos não concomitantes
-        ''' </summary>
-        ''' <param name="DER"></param>
-        ''' <param name="Autor"></param>
-        Friend Sub CalculaTempoContribuicao(DER As Date, Autor As Pessoa)
-            Dim TotalDeDias As Integer
-            For Each vinc In Autor.Vinculos
-
-                If vinc.Fim <> "" OrElse vinc.UltimaRemuneracao <> "" Then 'Se tem data final ou última remuneração
-                    Dim DataInicial As Date = CDate(vinc.Inicio)
-                    Dim DataFinal As Date
-                    If vinc.Fim = "" Then
-                        DataFinal = CDate(vinc.UltimaRemuneracao)
-                        DataFinal = DateSerial(DataFinal.Year, DataFinal.Month, DateTime.DaysInMonth(DataFinal.Year, DataFinal.Month))
-                    Else
-                        DataFinal = CDate(vinc.Fim)
-                    End If
-                    If DataInicial > DER Then Continue For
-                    If DataFinal > DER Then DataFinal = DER
-
-                    Dim InicialAbsorvido As Boolean = False
-                    Dim FinalAbsorvido As Boolean = False
-
-                    For Each vinc2 In Autor.Vinculos 'Análise se o vínculo é concomitante com outros, para fins de contagem do tempo de serviço
-                        If vinc.Sequencial <> vinc2.Sequencial Then 'Se não é o mesmo vínculo
-                            Dim DataInicial2 As Date = CDate(vinc2.Inicio)
-                            Dim DataFinal2 As Date
-                            If vinc2.Fim = "" Then
-                                DataFinal2 = CDate(vinc2.UltimaRemuneracao)
-                                DataFinal2 = DateSerial(DataFinal2.Year, DataFinal2.Month, DateTime.DaysInMonth(DataFinal2.Year, DataFinal2.Month))
-                            Else
-                                DataFinal2 = CDate(vinc2.Fim)
-                            End If
-                            If DataInicial >= DataInicial2 AndAlso DataInicial < DataFinal2 Then
-                                InicialAbsorvido = True
-                                If DataFinal <= DataFinal2 Then
-                                    DataInicial = DataFinal
-                                Else
-                                    DataInicial = DataFinal2
-                                End If
-                            End If
-                            If DataFinal <= DataFinal2 AndAlso DataFinal > DataInicial2 Then
-                                FinalAbsorvido = True
-                                If DataInicial >= DataInicial2 Then
-                                    DataFinal = DataInicial
-                                Else
-                                    DataFinal = DataInicial2
-                                End If
-                            End If
-                        End If
-                    Next
-
-                    Dim Dias As Integer
-                    If InicialAbsorvido And FinalAbsorvido Then
-                        Dias = 0
-                    Else
-                        Dias = Dias360(DataInicial, DataFinal, True) + 1
-                    End If
-                    Dim Anos As Integer = Math.Floor(Dias / 360)
-                    Dim Meses As Integer = Math.Floor((Dias Mod 360) / 30)
-                    Dim DiasRestantes As Integer = (Dias Mod 360) Mod 30
-                    vinc.Anos = Anos
-                    vinc.Dias = DiasRestantes
-                    vinc.Meses = Meses
-                    vinc.DiasTotais = Dias
-                    TotalDeDias += Dias
-                End If
-            Next
-
-            Dim AnosTotais As Integer = Math.Floor(TotalDeDias / 360)
-            Dim MesesTotais As Integer = Math.Floor((TotalDeDias Mod 360) / 30)
-            Dim DiasTotaisRestantes As Integer = (TotalDeDias Mod 360) Mod 30
-            TempoAteDER = String.Format("{0} Anos, {1} Meses e {2} Dias", AnosTotais, MesesTotais, DiasTotaisRestantes)
-
-        End Sub
-
-        Public Overrides Function Equals(obj As Object) As Boolean
-            Dim b As Beneficio = DirectCast(obj, Beneficio)
-            If (b.NB = Me.NB) Then
-                Return True
-            Else
-                Return False
-            End If
-        End Function
     End Class
     Public Class Vinculo
         Public Property Sequencial As Integer
@@ -348,6 +198,7 @@ Namespace Minerador
         Public Property Origem As String
         Public Property Inicio As String
         Public Property Fim As String
+        Public Property Concomitancia As String
         Public Property Filiacao As String
         Public Property Ocupacao As String
         Public Property UltimaRemuneracao As String
@@ -358,29 +209,11 @@ Namespace Minerador
         Public Property Indicadores As New List(Of Indicador)
         Public Property Remuneracoes As New List(Of Remuneracao)
         Public Property Recolhimentos As New List(Of Recolhimento)
-        Public Overrides Function Equals(obj As Object) As Boolean
-            Dim v As Vinculo = DirectCast(obj, Vinculo)
-            If (v.Sequencial = Me.Sequencial) AndAlso (v.NIT = Me.NIT) AndAlso (v.CNPJ = Me.CNPJ) AndAlso (v.Inicio = Me.Inicio) AndAlso (v.Fim = Me.Fim) Then
-                Return True
-            Else
-                Return False
-            End If
-        End Function
     End Class
     Public Class Remuneracao
         Public Property Competencia As String
         Public Property Remuneracao As Double
         Public Property Indicadores As New List(Of Indicador)
-
-        Public Overrides Function Equals(obj As Object) As Boolean
-            Dim r As Remuneracao = DirectCast(obj, Remuneracao)
-            If (r.Competencia = Me.Competencia) AndAlso (r.Remuneracao = Me.Remuneracao) Then
-                Return True
-            Else
-                Return False
-            End If
-        End Function
-
     End Class
     Public Class Recolhimento
         Public Property Competencia As String
@@ -388,14 +221,6 @@ Namespace Minerador
         Public Property Contribuicao As Double
         Public Property SalarioContribuicao As Double
         Public Property Indicadores As New List(Of Indicador)
-        Public Overrides Function Equals(obj As Object) As Boolean
-            Dim r As Recolhimento = DirectCast(obj, Recolhimento)
-            If (r.Competencia = Me.Competencia) AndAlso (r.Contribuicao = Me.Contribuicao) AndAlso (r.DataPagamento = Me.DataPagamento) AndAlso (r.SalarioContribuicao = Me.SalarioContribuicao) Then
-                Return True
-            Else
-                Return False
-            End If
-        End Function
     End Class
     Public Class Indicador
         Public Property Indicador As String
