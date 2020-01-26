@@ -81,10 +81,15 @@ Module funcoesINSS
                         Dim DataInicial2 As Date = CDate(vinc2.Inicio)
                         Dim DataFinal2 As Date
                         If vinc2.Fim = "" Then
-                            DataFinal2 = CDate(vinc2.UltimaRemuneracao)
-                            DataFinal2 = DateSerial(DataFinal2.Year, DataFinal2.Month, DateTime.DaysInMonth(DataFinal2.Year, DataFinal2.Month))
+                            If vinc2.UltimaRemuneracao = "" Then
+                                DataFinal2 = DataInicial2
+                            Else
+
+                                DataFinal2 = CDate(vinc2.UltimaRemuneracao)
+                                DataFinal2 = DateSerial(DataFinal2.Year, DataFinal2.Month, DateTime.DaysInMonth(DataFinal2.Year, DataFinal2.Month))
+                            End If
                         Else
-                            DataFinal2 = CDate(vinc2.Fim)
+                                DataFinal2 = CDate(vinc2.Fim)
                         End If
                         If DataInicial >= DataInicial2 AndAlso DataInicial < DataFinal2 Then
                             listaConcomitancias.Add(CStr(vinc2.Sequencial))

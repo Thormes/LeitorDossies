@@ -82,9 +82,22 @@ Namespace Minerador
             Dim benefCessado As Beneficio
             Dim benefIndeferido As Beneficio
             Dim benefMensalidade As Beneficio
+            Dim benefRequerido As Beneficio
             Dim benefAtivo As New List(Of Beneficio)
             'Autor.Beneficios.Sort(Function(x, y) CDate(x.DER).CompareTo(CDate(y.DER)))
             For Each benef In Autor.Beneficios
+                If benefRequerido IsNot Nothing Then
+                    If benef.DER.Length = 10 Then
+                        If benefRequerido.DER.Length <> 10 Then
+                            benefRequerido = benef
+                        Else
+                            If CDate(benefRequerido.DER) < CDate(benef.DER) Then benefRequerido = benef
+                        End If
+                    End If
+                Else
+                    benefRequerido = benef
+                End If
+
                 If benef.Status IsNot Nothing Then
                     If benef.Status = "INDEFERIDO" And benef.DER.Length = 10 Then
                         If benefIndeferido Is Nothing Then
@@ -114,6 +127,7 @@ Namespace Minerador
             If benefIndeferido IsNot Nothing Then Autor.UltimoBeneficioIndeferido = benefIndeferido
             Autor.BeneficiosAtivos = benefAtivo
             If benefMensalidade IsNot Nothing Then Autor.BeneficioEmMensalidadeRecuperacao = benefMensalidade
+            If benefRequerido IsNot Nothing Then Autor.UltimoBeneficioRequerido = benefRequerido
         End Sub
     End Class
     Public Class OutroProcesso
@@ -146,6 +160,7 @@ Namespace Minerador
         Public Property OutrosProcessos As New List(Of OutroProcesso)
         Public Property Beneficios As New List(Of Beneficio)
         Public Property Vinculos As New List(Of Vinculo)
+        Public Property UltimoBeneficioRequerido As Beneficio
         Public Property UltimoBeneficioIndeferido As Beneficio
         Public Property UltimoBeneficioCessado As Beneficio
         Public Property BeneficioEmMensalidadeRecuperacao As Beneficio
