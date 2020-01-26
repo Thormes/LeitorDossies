@@ -97,6 +97,10 @@ Namespace Minerador
                 Else
                     benefRequerido = benef
                 End If
+                If benef.DER.Length = 10 AndAlso Autor.Nascimento.Length = 10 Then
+                    benef.IdadeNaDER = CalculaIdade(CDate(Autor.Nascimento), CDate(benef.DER))
+                End If
+
 
                 If benef.Status IsNot Nothing Then
                     If benef.Status = "INDEFERIDO" And benef.DER.Length = 10 Then
@@ -202,6 +206,7 @@ Namespace Minerador
         Public Property ObitoInstituidor As String
         Public Property APR As Double
         Public Property TempoAteDER As String
+        Public Property IdadeNaDER As String
         Public Property CartaConcessao As CartaConcessao
         Public Property Laudos As New List(Of Laudo)
         Public Property HISCRE As New List(Of HISCRE)

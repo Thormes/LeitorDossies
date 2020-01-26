@@ -89,7 +89,7 @@ Module funcoesINSS
                                 DataFinal2 = DateSerial(DataFinal2.Year, DataFinal2.Month, DateTime.DaysInMonth(DataFinal2.Year, DataFinal2.Month))
                             End If
                         Else
-                                DataFinal2 = CDate(vinc2.Fim)
+                            DataFinal2 = CDate(vinc2.Fim)
                         End If
                         If DataInicial >= DataInicial2 AndAlso DataInicial < DataFinal2 Then
                             listaConcomitancias.Add(CStr(vinc2.Sequencial))
@@ -142,4 +142,65 @@ Module funcoesINSS
 
 
     End Sub
+    Friend Function CalculaIdade(Nascimento As Date, Final As Date) As String
+        If Nascimento > Final Then
+            Return "Data de Nascimento Maior que data a calcular"
+        End If
+
+        Dim DifAno As Integer
+        Dim DifMes As Integer
+        Dim DifDia As Integer
+        Dim AnoDN As Integer = Nascimento.Year
+        Dim MesDN As Integer = Nascimento.Month
+        Dim DiaDN As Integer = Nascimento.Day
+        Dim AnoFim As Integer = Final.Year
+        Dim MesFim As Integer = Final.Month
+        Dim DiaFim As Integer = Final.Day
+        Dim Idade As String
+        DifAno = AnoFim - AnoDN
+        DifMes = MesFim - MesDN
+        DifDia = DiaFim - DiaDN
+        If (DifMes) < 0 Then
+            DifAno -= 1
+        End If
+        If (DifDia) < 0 Then
+            DifMes -= 1
+            If (MesFim - 1) < 8 Then
+                If ((MesFim - 1) Mod 2) = 0 Then
+                    If (MesFim - 1) = 2 Then
+                        If AnoFim Mod 4 = 0 Then
+                            DifDia = 29 + DifDia
+                        Else
+                            DifDia = 28 + DifDia
+                        End If
+                    Else
+                        DifDia = 30 + DifDia
+                    End If
+                Else
+                    DifDia = 31 + DifDia
+                End If
+            Else
+                If ((MesFim - 1) Mod 2) = 0 Then
+                    DifDia = 31 + DifDia
+                Else
+                    DifDia = 30 + DifDia
+                End If
+            End If
+        End If
+        If (DifMes) < 0 Then
+            DifMes = DifMes + 12
+        End If
+
+        If DifAno < 0 Then
+            DifAno = DifAno * (-1)
+        End If
+
+        If (DifDia) < 0 Then
+            DifDia = DifDia * (-1)
+        End If
+
+        Idade = String.Format("{0} Anos, {1} Meses e {2} Dias", DifAno.ToString(), DifMes.ToString(), DifDia.ToString())
+        Return Idade
+
+    End Function
 End Module
