@@ -86,6 +86,9 @@ Namespace Minerador
             Dim benefAtivo As New List(Of Beneficio)
             'Autor.Beneficios.Sort(Function(x, y) CDate(x.DER).CompareTo(CDate(y.DER)))
             For Each benef In Autor.Beneficios
+                'If benef.Laudos.Count > 0 Then
+                '    benef.Laudos.Sort(Function(x, y) CDate(x.DataExame).CompareTo(CDate(y.DataExame)))
+                'End If
                 If benefRequerido IsNot Nothing Then
                     If benef.DER.Length = 10 Then
                         If benefRequerido.DER.Length <> 10 Then

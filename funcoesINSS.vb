@@ -130,14 +130,19 @@ Module funcoesINSS
                 TotalDeDias += Dias
             End If
         Next
-
+        Dim TextoAnos As String = "Anos"
+        Dim TextoMeses As String = "Meses"
+        Dim TextoDias As String = "Dias"
         Dim AnosTotais As Integer = Math.Floor(TotalDeDias / 360)
         Dim MesesTotais As Integer = Math.Floor((TotalDeDias Mod 360) / 30)
         Dim DiasTotaisRestantes As Integer = (TotalDeDias Mod 360) Mod 30
+        If AnosTotais = 1 Then TextoAnos = "Ano"
+        If MesesTotais = 1 Then TextoMeses = "Mês"
+        If DiasTotaisRestantes = 1 Then TextoDias = "Dia"
         If Beneficio IsNot Nothing Then
-            Beneficio.TempoAteDER = String.Format("{0} Anos, {1} Meses e {2} Dias", AnosTotais, MesesTotais, DiasTotaisRestantes)
+            Beneficio.TempoAteDER = String.Format("{0} {1}, {2} {3} e {4} {5}", AnosTotais, TextoAnos, MesesTotais, TextoMeses, DiasTotaisRestantes, TextoDias)
         Else
-            Autor.TempoContribuicao = String.Format("{0} Anos, {1} Meses e {2} Dias", AnosTotais, MesesTotais, DiasTotaisRestantes)
+            Autor.TempoContribuicao = String.Format("{0} {1}, {2} {3} e {4} {5}", AnosTotais, TextoAnos, MesesTotais, TextoMeses, DiasTotaisRestantes, TextoDias)
         End If
 
 
@@ -160,6 +165,9 @@ Module funcoesINSS
         DifAno = AnoFim - AnoDN
         DifMes = MesFim - MesDN
         DifDia = DiaFim - DiaDN
+        Dim TextoAnos As String = "Anos"
+        Dim TextoMeses As String = "Meses"
+        Dim TextoDias As String = "Dias"
         If (DifMes) < 0 Then
             DifAno -= 1
         End If
@@ -199,7 +207,12 @@ Module funcoesINSS
             DifDia = DifDia * (-1)
         End If
 
-        Idade = String.Format("{0} Anos, {1} Meses e {2} Dias", DifAno.ToString(), DifMes.ToString(), DifDia.ToString())
+        If DifAno = 1 Then TextoAnos = "Ano"
+        If DifMes = 1 Then TextoMeses = "Mês"
+        If DifDia = 1 Then TextoDias = "Dia"
+
+
+        Idade = String.Format("{0} {1}, {2} {3} e {4} {5}", DifAno.ToString(), TextoAnos, DifMes.ToString(), TextoMeses, DifDia.ToString(), TextoDias)
         Return Idade
 
     End Function

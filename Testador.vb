@@ -120,4 +120,5 @@ Public Class Testador
     Private Sub ResetarAutorToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles ResetarAutorToolStripMenuItem.Click
         Autor = New Pessoa
     End Sub
+
 End Class

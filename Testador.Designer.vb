@@ -86,7 +86,7 @@ Partial Class Testador
         Me.MenuStrip1.Name = "MenuStrip1"
         Me.MenuStrip1.Size = New System.Drawing.Size(1588, 24)
         Me.MenuStrip1.TabIndex = 4
-        Me.MenuStrip1.Text = "MenuStrip1"
+        Me.MenuStrip1.Text = "Substituições"
         '
         'LerToolStripMenuItem
         '
@@ -147,7 +147,7 @@ Partial Class Testador
         'ResetarAutorToolStripMenuItem
         '
         Me.ResetarAutorToolStripMenuItem.Name = "ResetarAutorToolStripMenuItem"
-        Me.ResetarAutorToolStripMenuItem.Size = New System.Drawing.Size(180, 22)
+        Me.ResetarAutorToolStripMenuItem.Size = New System.Drawing.Size(145, 22)
         Me.ResetarAutorToolStripMenuItem.Text = "Resetar Autor"
         '
         'copyClipboard
