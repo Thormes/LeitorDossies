@@ -411,7 +411,13 @@ Module parseTabelas
                     benefício.Motivo = HtmlDecode(dadosBenef1.SelectSingleNode(".//tr[2]/td[10]").InnerText.Trim)
 
                     benefício.RMI = dadosbenef2.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim
-                    benefício.SB = Replace(dadosbenef2.SelectSingleNode(".//tr[2]/td[2]").InnerText.Trim, "-", "0")
+                    Try
+                        benefício.SB = dadosbenef2.SelectSingleNode(".//tr[2]/td[2]").InnerText.Trim
+                    Catch ex As Exception
+                        If ex.Message.Contains("cadeia") Then
+                            benefício.SB = 0
+                        End If
+                    End Try
                     benefício.Coeficiente = If(SomenteNumerico(dadosbenef2.SelectSingleNode(".//tr[2]/td[3]").InnerText) <> "", SomenteNumerico(dadosbenef2.SelectSingleNode(".//tr[2]/td[3]").InnerText) / 100, 0)
                     benefício.RMA = dadosbenef2.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim
                     benefício.DAT = dadosbenef2.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim
