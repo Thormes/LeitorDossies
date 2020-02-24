@@ -39,7 +39,7 @@ Namespace Minerador
             html = EliminarQuebras(html)
             html = NormalizarEspacos(html)
 
-            If html.Contains("<title>SAPIENS - Dossiê Previdênciário</title>") Then
+            If html.Contains("<title>SAPIENS - Dossiê Previdênciário</title>") Or html.Contains("<title>SAPIENS - Extrato dos Dossiês de Defesa e Médico</title>") Then
                 Sucesso = True
                 TipoDeDossie = TipoDossie.Previdenciario
                 Mensagem = "Dossiê Previdenciário"
@@ -94,7 +94,7 @@ Namespace Minerador
                         If benefRequerido.DER.Length <> 10 Then
                             benefRequerido = benef
                         Else
-                            If CDate(benefRequerido.DER) < CDate(benef.DER) Then benefRequerido = benef
+                            If CDate(benefRequerido.DER) <= CDate(benef.DER) Then benefRequerido = benef
                         End If
                     End If
                 Else
@@ -110,21 +110,30 @@ Namespace Minerador
                         If benefIndeferido Is Nothing Then
                             benefIndeferido = benef
                         Else
-                            If CDate(benefIndeferido.DER) < CDate(benef.DER) Then benefIndeferido = benef
+                            If CDate(benefIndeferido.DER) <= CDate(benef.DER) Then benefIndeferido = benef
                         End If
                     ElseIf benef.Status = "CESSADO" And benef.DCB.Length = 10 Then
                         If benefCessado Is Nothing Then
                             benefCessado = benef
                         Else
-                            If CDate(benefCessado.DCB) < CDate(benef.DCB) Then benefCessado = benef
+                            If CDate(benefCessado.DCB) <= CDate(benef.DCB) Then benefCessado = benef
                         End If
                     ElseIf benef.Status = "ATIVO" Then
-                        benefAtivo.Add(benef)
+                        If benef.DCB.Length = 10 Then
+                            If CDate(benef.DCB) <= Today Then
+                                benefCessado = benef
+                            Else
+                                benefAtivo.Add(benef)
+                            End If
+                        Else
+                            benefAtivo.Add(benef)
+                        End If
+
                     ElseIf benef.Status.Contains("RECEBENDO MENSALIDADE") Then
                         If benefMensalidade Is Nothing And benef.DCB.Length = 10 Then
                             benefMensalidade = benef
                         Else
-                            If CDate(benefMensalidade.DCB) < CDate(benef.DCB) Then benefMensalidade = benef
+                            If CDate(benefMensalidade.DCB) <= CDate(benef.DCB) Then benefMensalidade = benef
                         End If
                     End If
                     If benef.DER.Length = 10 Then CalculaTempoContribuicao(Autor, benef)
