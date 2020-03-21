@@ -1,5 +1,6 @@
 ﻿Imports LeitorDossies.Minerador
 Imports HtmlAgilityPack
+Imports System.Text.RegularExpressions
 Imports System.Net.WebUtility
 
 
@@ -91,7 +92,7 @@ Module parseTabelas
             If linha.SelectSingleNode(".//th").InnerText = "FILIAÇÃO" Then Pessoa.Filiacao = linha.SelectSingleNode(".//td").InnerText
             If linha.SelectSingleNode(".//th").InnerText = "SEXO" Then Pessoa.Sexo = linha.SelectSingleNode(".//td").InnerText
             If linha.SelectSingleNode(".//th").InnerText = "ENDEREÇO PRINCIPAL" Then Pessoa.EnderecoPrincipal = linha.SelectSingleNode(".//td").InnerText
-            If linha.SelectSingleNode(".//th").InnerText = "ENDEREÇO SECUNDÁRIO" Then Pessoa.EndereçoSecundario = linha.SelectSingleNode(".//td").InnerText
+            If linha.SelectSingleNode(".//th").InnerText = "ENDEREÇO SECUNDÁRIO" Then Pessoa.EnderecoSecundario = linha.SelectSingleNode(".//td").InnerText
         Next
     End Sub
     Friend Sub ParseTabelaRelaçãoProcessos(Elemento As HtmlNode, ByRef Pessoa As Pessoa)
@@ -117,10 +118,10 @@ Module parseTabelas
             If linha.SelectSingleNode(".//th") Is Nothing Then
                 If Not linha.InnerText.Trim.Contains("Não foram encontrados requerimentos em nome do autor") Then
                     benefício.NB = linha.SelectSingleNode(".//td[1]").InnerText.Trim
-                    benefício.Espécie = linha.SelectSingleNode(".//td[2]").InnerText.Trim
-                    benefício.DER = linha.SelectSingleNode(".//td[3]").InnerText.Trim
-                    benefício.DIB = linha.SelectSingleNode(".//td[4]").InnerText.Trim
-                    benefício.DCB = linha.SelectSingleNode(".//td[5]").InnerText.Trim
+                    benefício.Especie = linha.SelectSingleNode(".//td[2]").InnerText.Trim
+                    benefício.DER = pegaData(linha.SelectSingleNode(".//td[3]").InnerText.Trim)
+                    benefício.DIB = pegaData(linha.SelectSingleNode(".//td[4]").InnerText.Trim)
+                    benefício.DCB = pegaData(linha.SelectSingleNode(".//td[5]").InnerText.Trim)
                     benefício.Status = linha.SelectSingleNode(".//td[6]").InnerText.Trim
                     benefício.Motivo = HtmlDecode(linha.SelectSingleNode(".//td[7]").InnerText.Trim)
                     For Each benef In Pessoa.Beneficios
@@ -168,11 +169,12 @@ Module parseTabelas
                 relação.Sequencial = linha.SelectSingleNode(".//td[1]").InnerText.Trim
                 relação.NIT = linha.SelectSingleNode(".//td[2]").InnerText.Trim
                 relação.Origem = linha.SelectSingleNode(".//td[4]").InnerText.Trim
-                relação.Inicio = linha.SelectSingleNode(".//td[5]").InnerText.Trim
-                relação.Fim = linha.SelectSingleNode(".//td[6]").InnerText.Trim
+
+                relação.Inicio = pegaData(linha.SelectSingleNode(".//td[5]").InnerText.Trim)
+                relação.Fim = pegaData(linha.SelectSingleNode(".//td[6]").InnerText.Trim)
                 relação.Filiacao = linha.SelectSingleNode(".//td[7]").InnerText.Trim
                 relação.Ocupacao = linha.SelectSingleNode(".//td[8]").InnerText.Trim
-                relação.UltimaRemuneracao = linha.SelectSingleNode(".//td[9]").InnerText.Trim
+                relação.UltimaRemuneracao = pegaData(linha.SelectSingleNode(".//td[9]").InnerText.Trim)
                 Dim relindicador = linha.SelectSingleNode(".//td[10]").InnerText
                 If relindicador <> "" Then
                     relação.Indicadores = New List(Of Indicador)
@@ -234,7 +236,7 @@ Module parseTabelas
                             'If relação.Remuneracoes Is Nothing Then relação.Remuneracoes = New List(Of Remuneracao)
                             Dim novaremuneração As Boolean = True
                             Dim remuneração As New Remuneracao
-                            Dim competencia As String = trremuneração.SelectSingleNode(".//td[1]").InnerText
+                            Dim competencia As Date = pegaData(trremuneração.SelectSingleNode(".//td[1]").InnerText)
                             Dim remuneracao As String = trremuneração.SelectSingleNode(".//td[3]").InnerText
                             For Each remunera In relação.Remuneracoes
                                 If remunera.Competencia = competencia And remuneracao = remunera.Remuneracao Then
@@ -243,7 +245,7 @@ Module parseTabelas
                                 End If
                             Next
                             With remuneração
-                                .Competencia = trremuneração.SelectSingleNode(".//td[1]").InnerText
+                                .Competencia = pegaData(trremuneração.SelectSingleNode(".//td[1]").InnerText)
                                 .Remuneracao = trremuneração.SelectSingleNode(".//td[3]").InnerText
                             End With
                             If trremuneração.SelectSingleNode(".//td[4]").InnerText.Trim <> "" Then
@@ -262,7 +264,7 @@ Module parseTabelas
                             If trremuneração.SelectSingleNode(".//td[5]") IsNot Nothing Then
                                 novaremuneração = True
                                 remuneração = New Remuneracao
-                                competencia = trremuneração.SelectSingleNode(".//td[5]").InnerText
+                                competencia = pegaData(trremuneração.SelectSingleNode(".//td[5]").InnerText)
                                 remuneracao = trremuneração.SelectSingleNode(".//td[7]").InnerText
                                 For Each remunera In relação.Remuneracoes
                                     If remunera.Competencia = competencia And remuneracao = remunera.Remuneracao Then
@@ -271,7 +273,7 @@ Module parseTabelas
                                     End If
                                 Next
                                 With remuneração
-                                    .Competencia = trremuneração.SelectSingleNode(".//td[5]").InnerText
+                                    .Competencia = pegaData(trremuneração.SelectSingleNode(".//td[5]").InnerText)
                                     .Remuneracao = trremuneração.SelectSingleNode(".//td[7]").InnerText
                                 End With
                                 If trremuneração.SelectSingleNode(".//td[8]").InnerText.Trim <> "" Then
@@ -295,8 +297,8 @@ Module parseTabelas
                             'If relação.Recolhimentos Is Nothing Then relação.Recolhimentos = New List(Of Recolhimento)
                             Dim novaremuneração As Boolean = True
                             Dim remuneração As New Recolhimento
-                            Dim competencia As String = trremuneração.SelectSingleNode(".//td[1]").InnerText
-                            Dim dataPagamento As String = trremuneração.SelectSingleNode(".//td[2]").InnerText
+                            Dim competencia As Date = pegaData(trremuneração.SelectSingleNode(".//td[1]").InnerText)
+                            Dim dataPagamento As Date = pegaData(trremuneração.SelectSingleNode(".//td[2]").InnerText)
                             Dim contribuicao As String = trremuneração.SelectSingleNode(".//td[3]").InnerText
                             For Each remunera In relação.Recolhimentos
                                 If remunera.Competencia = competencia And contribuicao = remunera.Contribuicao And dataPagamento = remunera.DataPagamento Then
@@ -306,8 +308,8 @@ Module parseTabelas
                             Next
 
                             With remuneração
-                                .Competencia = trremuneração.SelectSingleNode(".//td[1]").InnerText
-                                .DataPagamento = trremuneração.SelectSingleNode(".//td[2]").InnerText
+                                .Competencia = pegaData(trremuneração.SelectSingleNode(".//td[1]").InnerText)
+                                .DataPagamento = pegaData(trremuneração.SelectSingleNode(".//td[2]").InnerText)
                                 .Contribuicao = trremuneração.SelectSingleNode(".//td[3]").InnerText
                                 .SalarioContribuicao = trremuneração.SelectSingleNode(".//td[4]").InnerText
                             End With
@@ -325,8 +327,8 @@ Module parseTabelas
                             If trremuneração.SelectSingleNode(".//td[6]") IsNot Nothing Then
                                 novaremuneração = True
                                 remuneração = New Recolhimento
-                                competencia = trremuneração.SelectSingleNode(".//td[6]").InnerText
-                                dataPagamento = trremuneração.SelectSingleNode(".//td[7]").InnerText
+                                competencia = pegaData(trremuneração.SelectSingleNode(".//td[6]").InnerText)
+                                dataPagamento = pegaData(trremuneração.SelectSingleNode(".//td[7]").InnerText)
                                 contribuicao = trremuneração.SelectSingleNode(".//td[8]").InnerText
                                 For Each remunera In relação.Recolhimentos
                                     If remunera.Competencia = competencia And contribuicao = remunera.Contribuicao And dataPagamento = remunera.DataPagamento Then
@@ -336,8 +338,8 @@ Module parseTabelas
                                 Next
 
                                 With remuneração
-                                    .Competencia = trremuneração.SelectSingleNode(".//td[6]").InnerText
-                                    .DataPagamento = trremuneração.SelectSingleNode(".//td[7]").InnerText
+                                    .Competencia = pegaData(trremuneração.SelectSingleNode(".//td[6]").InnerText)
+                                    .DataPagamento = pegaData(trremuneração.SelectSingleNode(".//td[7]").InnerText)
                                     .Contribuicao = trremuneração.SelectSingleNode(".//td[8]").InnerText
                                     .SalarioContribuicao = trremuneração.SelectSingleNode(".//td[9]").InnerText
                                 End With
@@ -362,10 +364,10 @@ Module parseTabelas
                     If vinculo.SelectSingleNode(".//table/tr[2]/td[2]").InnerText.Trim.Length <> 10 And vinculo.SelectSingleNode(".//table/tr[2]/td[2]").InnerText.Trim.Length <> 9 Then
                         relação.CNPJ = vinculo.SelectSingleNode(".//table/tr[2]/td[2]").InnerText.Trim
                         relação.Origem = vinculo.SelectSingleNode(".//table/tr[2]/td[3]").InnerText.Trim
-                        relação.Inicio = vinculo.SelectSingleNode(".//table/tr[2]/td[4]").InnerText.Trim
-                        relação.Fim = vinculo.SelectSingleNode(".//table/tr[2]/td[5]").InnerText.Trim
+                        relação.Inicio = pegaData(vinculo.SelectSingleNode(".//table/tr[2]/td[4]").InnerText.Trim)
+                        relação.Fim = pegaData(vinculo.SelectSingleNode(".//table/tr[2]/td[5]").InnerText.Trim)
                         relação.Filiacao = vinculo.SelectSingleNode(".//table/tr[2]/td[6]").InnerText.Trim
-                        relação.UltimaRemuneracao = vinculo.SelectSingleNode(".//table/tr[2]/td[7]").InnerText.Trim
+                        relação.UltimaRemuneracao = pegaData(vinculo.SelectSingleNode(".//table/tr[2]/td[7]").InnerText.Trim)
                         relação.Indicadores.Add(New Indicador With {.Indicador = vinculo.SelectSingleNode(".//table/tr[2]/td[1]").InnerText.Trim})
                     End If
                     Pessoa.Vinculos.Add(relação)
@@ -393,9 +395,9 @@ Module parseTabelas
                 End If
                 benefício.Sequencial = dadosBenef1.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim
                 benefício.NB = dadosBenef1.SelectSingleNode(".//tr[2]/td[2]").InnerText.Trim
-                benefício.Espécie = dadosBenef1.SelectSingleNode(".//tr[2]/td[3]").InnerText.Trim
-                benefício.DER = dadosBenef1.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim
-                benefício.DDB = dadosBenef1.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim
+                benefício.Especie = dadosBenef1.SelectSingleNode(".//tr[2]/td[3]").InnerText.Trim
+                benefício.DER = pegaData(dadosBenef1.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim)
+                benefício.DDB = pegaData(dadosBenef1.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim)
 
                 If dadosBenef1.SelectSingleNode(".//tr[2]/td[6]").InnerText.Trim = "INDEFERIDO" Then
                     benefício.Status = dadosBenef1.SelectSingleNode(".//tr[2]/td[6]").InnerText.Trim
@@ -404,9 +406,9 @@ Module parseTabelas
                     benefício.Motivo = HtmlDecode(dadosBenef1.SelectSingleNode(".//tr[2]/td[9]").InnerText.Trim)
                     benefício.APSRequerimento = dadosBenef1.SelectSingleNode(".//tr[2]/td[10]").InnerText.Trim
                 Else
-                    benefício.DIB = dadosBenef1.SelectSingleNode(".//tr[2]/td[6]").InnerText.Trim
-                    benefício.DCB = dadosBenef1.SelectSingleNode(".//tr[2]/td[7]").InnerText.Trim
-                    benefício.DIP = dadosBenef1.SelectSingleNode(".//tr[2]/td[8]").InnerText.Trim
+                    benefício.DIB = pegaData(dadosBenef1.SelectSingleNode(".//tr[2]/td[6]").InnerText.Trim)
+                    benefício.DCB = pegaData(dadosBenef1.SelectSingleNode(".//tr[2]/td[7]").InnerText.Trim)
+                    benefício.DIP = pegaData(dadosBenef1.SelectSingleNode(".//tr[2]/td[8]").InnerText.Trim)
                     benefício.Status = dadosBenef1.SelectSingleNode(".//tr[2]/td[9]").InnerText.Trim
                     benefício.Motivo = HtmlDecode(dadosBenef1.SelectSingleNode(".//tr[2]/td[10]").InnerText.Trim)
 
@@ -420,9 +422,9 @@ Module parseTabelas
                     End Try
                     benefício.Coeficiente = If(SomenteNumerico(dadosbenef2.SelectSingleNode(".//tr[2]/td[3]").InnerText) <> "", SomenteNumerico(dadosbenef2.SelectSingleNode(".//tr[2]/td[3]").InnerText) / 100, 0)
                     benefício.RMA = dadosbenef2.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim
-                    benefício.DAT = dadosbenef2.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim
-                    benefício.DataNBAnterior = dadosbenef2.SelectSingleNode(".//tr[2]/td[6]").InnerText.Trim
-                    benefício.DataObito = dadosbenef2.SelectSingleNode(".//tr[2]/td[7]").InnerText.Trim
+                    benefício.DAT = pegaData(dadosbenef2.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim)
+                    benefício.DataNBAnterior = pegaData(dadosbenef2.SelectSingleNode(".//tr[2]/td[6]").InnerText.Trim)
+                    benefício.DataObito = pegaData(dadosbenef2.SelectSingleNode(".//tr[2]/td[7]").InnerText.Trim)
                     benefício.IRT = Replace(dadosbenef2.SelectSingleNode(".//tr[2]/td[8]").InnerText, ".", ",").Trim
                     benefício.Indice1298 = dadosbenef2.SelectSingleNode(".//tr[2]/td[9]").InnerText.Trim
                     benefício.Indice0104 = dadosbenef2.SelectSingleNode(".//tr[2]/td[10]").InnerText.Trim
@@ -431,7 +433,7 @@ Module parseTabelas
                     benefício.NaturezaOcupacao = dadosbenef3.SelectSingleNode(".//tr[2]/td[3]").InnerText.Trim
                     benefício.TipoConcessao = dadosbenef3.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim
                     benefício.Tratamento = dadosbenef3.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim
-                    benefício.DRD = dadosbenef3.SelectSingleNode(".//tr[2]/td[6]").InnerText.Trim
+                    benefício.DRD = pegaData(dadosbenef3.SelectSingleNode(".//tr[2]/td[6]").InnerText.Trim)
                     benefício.APSConcessora = dadosbenef3.SelectSingleNode(".//tr[2]/td[7]").InnerText.Trim
                     benefício.APSMantenedora = dadosbenef3.SelectSingleNode(".//tr[2]/td[8]").InnerText.Trim
                 End If
@@ -476,25 +478,30 @@ Module parseTabelas
                 If listaSalários IsNot Nothing Then
                     For Each salário In listaSalários
                         If salário.SelectNodes(".//th") Is Nothing Then
-                            Dim salcon As New SalarioConcessao With {
+                            If pegaData(salário.SelectSingleNode(".//td[2]").InnerText.Trim) IsNot Nothing Then
+                                Dim salcon As New SalarioConcessao With {
                             .Sequencial = salário.SelectSingleNode(".//td[1]").InnerText.Trim,
-                            .Competencia = salário.SelectSingleNode(".//td[2]").InnerText.Trim,
+                            .Competencia = pegaData(salário.SelectSingleNode(".//td[2]").InnerText.Trim),
                             .Salario = salário.SelectSingleNode(".//td[3]").InnerText.Trim,
                             .Indice = salário.SelectSingleNode(".//td[4]").InnerText.Trim,
                             .Corrigido = salário.SelectSingleNode(".//td[5]").InnerText.Trim,
                             .Observacao = salário.SelectSingleNode(".//td[6]").InnerText.Trim
                         }
-                            carta.Salarios.Add(salcon)
+                                carta.Salarios.Add(salcon)
+                            End If
+
                             If salário.SelectSingleNode(".//td[7]") IsNot Nothing Then
-                                salcon = New SalarioConcessao With {
+                                If pegaData(salário.SelectSingleNode(".//td[8]").InnerText.Trim) IsNot Nothing Then
+                                    Dim salcon As New SalarioConcessao With {
                                 .Sequencial = salário.SelectSingleNode(".//td[7]").InnerText.Trim,
-                                .Competencia = salário.SelectSingleNode(".//td[8]").InnerText.Trim,
+                                .Competencia = pegaData(salário.SelectSingleNode(".//td[8]").InnerText.Trim),
                                 .Salario = salário.SelectSingleNode(".//td[9]").InnerText.Trim,
                                 .Indice = salário.SelectSingleNode(".//td[10]").InnerText.Trim,
                                 .Corrigido = salário.SelectSingleNode(".//td[11]").InnerText.Trim,
                                .Observacao = salário.SelectSingleNode(".//td[12]").InnerText.Trim
                             }
-                                carta.Salarios.Add(salcon)
+                                    carta.Salarios.Add(salcon)
+                                End If
                             End If
                         End If
                     Next
@@ -526,18 +533,18 @@ Module parseTabelas
             For Each linha In listaCréditos
                 If linha.GetAttributeValue("style", "") = "border-bottom: 1px #ccc solid;" Then
                     Dim Histórico As New HISCRE With {
-                            .Competencia = linha.SelectSingleNode(".//td[1]").InnerText.Trim,
-                            .Liquido = linha.SelectSingleNode(".//td[3]").InnerText.Trim,
+                            .Competencia = pegaData(linha.SelectSingleNode(".//td[1]").InnerText.Trim),
+                            .Liquido = Regex.Replace(linha.SelectSingleNode(".//td[3]").InnerText.Trim, "[^\d]", "") / 100,
                             .Meio = linha.SelectSingleNode(".//td[4]").InnerText.Trim,
                             .Status = linha.SelectSingleNode(".//td[5]").InnerText.Trim,
-                            .Previsao = linha.SelectSingleNode(".//td[6]").InnerText.Trim,
-                            .Pagamento = linha.SelectSingleNode(".//td[7]").InnerText.Trim,
+                            .Previsao = pegaData(linha.SelectSingleNode(".//td[6]").InnerText.Trim),
+                            .Pagamento = pegaData(linha.SelectSingleNode(".//td[7]").InnerText.Trim),
                             .Invalidado = parseBool(linha.SelectSingleNode(".//td[8]").InnerText.Trim),
                             .Isento = parseBool(linha.SelectSingleNode(".//td[9]").InnerText.Trim)
                         }
                     Dim Período = Split(linha.SelectSingleNode(".//td[2]").InnerText.Trim, " a ")
-                    Histórico.Inicial = Período(0)
-                    Histórico.Final = Período(1)
+                    Histórico.Inicial = pegaData(Período(0))
+                    Histórico.Final = pegaData(Período(1))
                     Dim TabelaRubricas As HtmlNode = linha.NextSibling.NextSibling.NextSibling.NextSibling.SelectSingleNode(".//td/table")
                     Dim rubricas As HtmlNodeCollection = TabelaRubricas.SelectNodes(".//tr")
                     Dim Total As Double = 0
@@ -547,7 +554,7 @@ Module parseTabelas
                             Dim valores As New Credito With {
                                     .Rubrica = rubrica.SelectSingleNode(".//td[1]").InnerText.Trim,
                                     .Descricao = rubrica.SelectSingleNode(".//td[2]").InnerText.Trim,
-                                    .Valor = rubrica.SelectSingleNode(".//td[3]").InnerText.Trim
+                                    .Valor = Regex.Replace(rubrica.SelectSingleNode(".//td[3]").InnerText.Trim, "[^\d]", "") / 100
                                 }
                             If valores.Rubrica > 100 And valores.Rubrica < 200 Then Total += valores.Valor
                             If valores.Rubrica > 200 And valores.Rubrica < 300 Then TotalDescontos += valores.Valor
@@ -610,12 +617,12 @@ Module parseTabelas
             NovoLaudo.NB = dadosLaudo.SelectSingleNode(".//tr[2]/td[2]").InnerText.Trim
             NovoLaudo.Requerimento = dadosLaudo.SelectSingleNode(".//tr[2]/td[3]").InnerText.Trim
             NovoLaudo.Ocupacao = dadosLaudo.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim
-            NovoLaudo.DataExame = dadosLaudo.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim
-            NovoLaudo.DER = dadosLaudo2.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim
-            NovoLaudo.DIB = dadosLaudo2.SelectSingleNode(".//tr[2]/td[2]").InnerText.Trim
-            NovoLaudo.DID = dadosLaudo2.SelectSingleNode(".//tr[2]/td[3]").InnerText.Trim
-            NovoLaudo.DII = dadosLaudo2.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim
-            NovoLaudo.DCB = dadosLaudo2.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim
+            NovoLaudo.DataExame = pegaData(dadosLaudo.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim)
+            NovoLaudo.DER = pegaData(dadosLaudo2.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim)
+            NovoLaudo.DIB = pegaData(dadosLaudo2.SelectSingleNode(".//tr[2]/td[2]").InnerText.Trim)
+            NovoLaudo.DID = pegaData(dadosLaudo2.SelectSingleNode(".//tr[2]/td[3]").InnerText.Trim)
+            NovoLaudo.DII = pegaData(dadosLaudo2.SelectSingleNode(".//tr[2]/td[4]").InnerText.Trim)
+            NovoLaudo.DCB = pegaData(dadosLaudo2.SelectSingleNode(".//tr[2]/td[5]").InnerText.Trim)
             NovoLaudo.CID = dadosLaudo2.SelectSingleNode(".//tr[2]/td[6]").InnerText.Trim
             NovoLaudo.EncaminhaReabilitacao = parseBool(dadosLaudo3.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim)
             NovoLaudo.AcidenteTrabalho = parseBool(dadosLaudo3.SelectSingleNode(".//tr[2]/td[2]").InnerText.Trim)
@@ -641,6 +648,15 @@ Module parseTabelas
 
         Next
     End Sub
+    Public Function pegaData(Texto As String) As Object
+        Dim dataRetorno As Date
+        Try
+            dataRetorno = CDate(Texto)
+            Return dataRetorno
+        Catch ex As Exception
+            Return Nothing
+        End Try
+    End Function
 
 End Module
 

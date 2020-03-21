@@ -1,8 +1,9 @@
 Imports HtmlAgilityPack
-
+Imports System.Text.RegularExpressions
 Namespace Minerador
 
     Public Class DossiePrevidenciario
+
         Public Property Sucesso As Boolean
         Public Property Mensagem As String
         Public Property TipoDeDossie As TipoDossie
@@ -89,38 +90,39 @@ Namespace Minerador
                 'If benef.Laudos.Count > 0 Then
                 '    benef.Laudos.Sort(Function(x, y) CDate(x.DataExame).CompareTo(CDate(y.DataExame)))
                 'End If
+                calcQualidadeSegurado(benef, Autor)
                 If benefRequerido IsNot Nothing Then
-                    If benef.DER.Length = 10 Then
-                        If benefRequerido.DER.Length <> 10 Then
+                    If benef.DER IsNot Nothing Then
+                        If benefRequerido.DER Is Nothing Then
                             benefRequerido = benef
                         Else
-                            If CDate(benefRequerido.DER) <= CDate(benef.DER) Then benefRequerido = benef
+                            If benefRequerido.DER <= benef.DER Then benefRequerido = benef
                         End If
                     End If
                 Else
                     benefRequerido = benef
                 End If
-                If benef.DER.Length = 10 AndAlso Autor.Nascimento.Length = 10 Then
-                    benef.IdadeNaDER = CalculaIdade(CDate(Autor.Nascimento), CDate(benef.DER))
+                If benef.DER IsNot Nothing AndAlso Autor.Nascimento IsNot Nothing Then
+                    benef.IdadeNaDER = CalculaIdade(Autor.Nascimento, benef.DER)
                 End If
 
 
                 If benef.Status IsNot Nothing Then
-                    If benef.Status = "INDEFERIDO" And benef.DER.Length = 10 Then
+                    If benef.Status = "INDEFERIDO" And benef.DER IsNot Nothing Then
                         If benefIndeferido Is Nothing Then
                             benefIndeferido = benef
                         Else
-                            If CDate(benefIndeferido.DER) <= CDate(benef.DER) Then benefIndeferido = benef
+                            If benefIndeferido.DER <= benef.DER Then benefIndeferido = benef
                         End If
-                    ElseIf benef.Status = "CESSADO" And benef.DCB.Length = 10 Then
+                    ElseIf benef.Status = "CESSADO" And benef.DCB IsNot Nothing Then
                         If benefCessado Is Nothing Then
                             benefCessado = benef
                         Else
-                            If CDate(benefCessado.DCB) <= CDate(benef.DCB) Then benefCessado = benef
+                            If benefCessado.DCB <= benef.DCB Then benefCessado = benef
                         End If
                     ElseIf benef.Status = "ATIVO" Then
-                        If benef.DCB.Length = 10 Then
-                            If CDate(benef.DCB) <= Today Then
+                        If benef.DCB IsNot Nothing Then
+                            If benef.DCB <= Today Then
                                 benefCessado = benef
                             Else
                                 benefAtivo.Add(benef)
@@ -130,13 +132,13 @@ Namespace Minerador
                         End If
 
                     ElseIf benef.Status.Contains("RECEBENDO MENSALIDADE") Then
-                        If benefMensalidade Is Nothing And benef.DCB.Length = 10 Then
+                        If benefMensalidade Is Nothing And benef.DCB IsNot Nothing Then
                             benefMensalidade = benef
                         Else
-                            If CDate(benefMensalidade.DCB) <= CDate(benef.DCB) Then benefMensalidade = benef
+                            If benefMensalidade.DCB <= benef.DCB Then benefMensalidade = benef
                         End If
                     End If
-                    If benef.DER.Length = 10 Then CalculaTempoContribuicao(Autor, benef)
+                    If benef.DER IsNot Nothing Then CalculaTempoContribuicao(Autor, benef)
                 End If
             Next
             If benefCessado IsNot Nothing Then Autor.UltimoBeneficioCessado = benefCessado
@@ -152,7 +154,7 @@ Namespace Minerador
         Public Property Interessados As String
         Public Property OrgaoJulgador As String
         Public Property Ajuizamento As String
-        Public Property DataAbertura As String
+        Public Property DataAbertura As Nullable(Of Date)
         Public Overrides Function Equals(obj As Object) As Boolean
             Dim p As OutroProcesso = DirectCast(obj, OutroProcesso)
             If (p.Processo = Me.Processo) Then
@@ -165,14 +167,15 @@ Namespace Minerador
     End Class
     Public Class Pessoa
         Public Property Nome As String
-        Public Property Nascimento As String
+        Public Property Nascimento As Nullable(Of Date)
         Public Property NIT As New List(Of String)
         Public Property CPF As String
         Public Property EstadoCivil As String
         Public Property Filiacao As String
         Public Property Sexo As String
         Public Property EnderecoPrincipal As String
-        Public Property EndereçoSecundario As String
+        Public Property EnderecoSecundario As String
+        Public Property EnderecoReceita As String
         Public Property OutrosProcessos As New List(Of OutroProcesso)
         Public Property Beneficios As New List(Of Beneficio)
         Public Property Vinculos As New List(Of Vinculo)
@@ -183,26 +186,26 @@ Namespace Minerador
         Public Property BeneficiosAtivos As List(Of Beneficio)
         Public Property TempoContribuicao As String
         Public Property TotalDias As Integer
-
+        Public Property QualidadeSegurado As New List(Of QualidadeSegurado)
     End Class
     Public Class Beneficio
         Public Property Sequencial As Integer
         Public Property NB As String
-        Public Property Espécie As String
-        Public Property DER As String
-        Public Property DIB As String
-        Public Property DDB As String
-        Public Property DCB As String
-        Public Property DIP As String
+        Public Property Especie As String
+        Public Property DER As Nullable(Of Date)
+        Public Property DIB As Nullable(Of Date)
+        Public Property DDB As Nullable(Of Date)
+        Public Property DCB As Nullable(Of Date)
+        Public Property DIP As Nullable(Of Date)
         Public Property Status As String
         Public Property Motivo As String
         Public Property RMI As Double
         Public Property SB As Double
         Public Property Coeficiente As Double
         Public Property RMA As Double
-        Public Property DAT As String
-        Public Property DataNBAnterior As String
-        Public Property DataObito As String
+        Public Property DAT As Nullable(Of Date)
+        Public Property DataNBAnterior As Nullable(Of Date)
+        Public Property DataObito As Nullable(Of Date)
         Public Property IRT As Double
         Public Property Indice1298 As Double
         Public Property Indice0104 As Double
@@ -211,29 +214,30 @@ Namespace Minerador
         Public Property NaturezaOcupacao As String
         Public Property TipoConcessao As String
         Public Property Tratamento As Integer
-        Public Property DRD As String
+        Public Property DRD As Nullable(Of Date)
         Public Property APSConcessora As String
         Public Property APSMantenedora As String
         Public Property APSRequerimento As String
-        Public Property ObitoInstituidor As String
+        Public Property ObitoInstituidor As Nullable(Of Date)
         Public Property APR As Double
         Public Property TempoAteDER As String
         Public Property IdadeNaDER As String
         Public Property CartaConcessao As CartaConcessao
         Public Property Laudos As New List(Of Laudo)
         Public Property HISCRE As New List(Of HISCRE)
+        Public Property DespachoDecisorio As String
     End Class
     Public Class Vinculo
         Public Property Sequencial As Integer
         Public Property NIT As String
         Public Property CNPJ As String
         Public Property Origem As String
-        Public Property Inicio As String
-        Public Property Fim As String
+        Public Property Inicio As Nullable(Of Date)
+        Public Property Fim As Nullable(Of Date)
         Public Property Concomitancia As String
         Public Property Filiacao As String
         Public Property Ocupacao As String
-        Public Property UltimaRemuneracao As String
+        Public Property UltimaRemuneracao As Nullable(Of Date)
         Public Property Anos As Integer
         Public Property Meses As Integer
         Public Property Dias As Integer
@@ -243,16 +247,32 @@ Namespace Minerador
         Public Property Recolhimentos As New List(Of Recolhimento)
     End Class
     Public Class Remuneracao
-        Public Property Competencia As String
+        Public Property Competencia As Nullable(Of Date)
         Public Property Remuneracao As Double
         Public Property Indicadores As New List(Of Indicador)
     End Class
     Public Class Recolhimento
-        Public Property Competencia As String
-        Public Property DataPagamento As String
+        Public Property Competencia As Nullable(Of Date)
+        Public Property DataPagamento As Nullable(Of Date)
         Public Property Contribuicao As Double
         Public Property SalarioContribuicao As Double
         Public Property Indicadores As New List(Of Indicador)
+    End Class
+    Public Class QualidadeSegurado
+        Public Property Inicio As Nullable(Of Date)
+        Public Property Fim As Nullable(Of Date)
+        Public Property tipodeQualidade As tipoQualidade
+        Public Property Extensao As Integer
+
+
+        Public Enum tipoQualidade As Integer
+            Beneficio = 1
+            Atividade = 2
+            Segregacao = 3
+            Reclusao = 4
+            Licenciamento = 5
+            Facultativo = 6
+        End Enum
     End Class
     Public Class Indicador
         Public Property Indicador As String
@@ -276,24 +296,24 @@ Namespace Minerador
     End Class
     Public Class SalarioConcessao
         Public Property Sequencial As Integer
-        Public Property Competencia As String
+        Public Property Competencia As Nullable(Of Date)
         Public Property Salario As Double
         Public Property Indice As Double
         Public Property Corrigido As Double
         Public Property Observacao As String
     End Class
     Public Class HISCRE
-        Public Property Competencia As String
-        Public Property Inicial As String
-        Public Property Final As String
+        Public Property Competencia As Nullable(Of Date)
+        Public Property Inicial As Nullable(Of Date)
+        Public Property Final As Nullable(Of Date)
         Public Property Bruto As Double
         Public Property Liquido As Double
         Public Property MR As Double
         Public Property Descontos As Double
         Public Property Meio As String
         Public Property Status As String
-        Public Property Previsao As String
-        Public Property Pagamento As String
+        Public Property Previsao As Nullable(Of Date)
+        Public Property Pagamento As Nullable(Of Date)
         Public Property Invalidado As Boolean
         Public Property Isento As Boolean
         Public Property Creditos As New List(Of Credito)
@@ -308,12 +328,12 @@ Namespace Minerador
         Public Property NB As String
         Public Property Requerimento As String
         Public Property Ocupacao As String
-        Public Property DataExame As String
-        Public Property DER As String
-        Public Property DIB As String
-        Public Property DID As String
-        Public Property DII As String
-        Public Property DCB As String
+        Public Property DataExame As Nullable(Of Date)
+        Public Property DER As Nullable(Of Date)
+        Public Property DIB As Nullable(Of Date)
+        Public Property DID As Nullable(Of Date)
+        Public Property DII As Nullable(Of Date)
+        Public Property DCB As Nullable(Of Date)
         Public Property CID As String
         Public Property Historico As String
         Public Property ExameFisico As String

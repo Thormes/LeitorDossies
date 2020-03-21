@@ -1,5 +1,9 @@
 ﻿Imports LeitorDossies.Minerador
+Imports System.Text.RegularExpressions
+
 Module funcoesINSS
+    Private Const BenefNaoSegurado = "21,23,25,29,54,56,60,68,85,86,87,88,89,93"
+
 
     ''' <summary>
     ''' Calcula a quantidade de dias entre duas datas,
@@ -58,38 +62,39 @@ Module funcoesINSS
     Friend Sub CalculaTempoContribuicao(Autor As Pessoa, Optional Beneficio As Beneficio = Nothing)
         Dim TotalDeDias As Integer
         For Each vinc In Autor.Vinculos
+            If Beneficio Is Nothing Then calcQualidadeSegurado(vinc, Autor)
             Dim listaConcomitancias As New List(Of String)
-            If vinc.Fim <> "" OrElse vinc.UltimaRemuneracao <> "" Then 'Se tem data final ou última remuneração
-                Dim DataInicial As Date = CDate(vinc.Inicio)
+            If vinc.Fim IsNot Nothing OrElse vinc.UltimaRemuneracao IsNot Nothing Then 'Se tem data final ou última remuneração
+                Dim DataInicial As Date = vinc.Inicio
                 Dim DataFinal As Date
-                If vinc.Fim = "" Then
-                    DataFinal = CDate(vinc.UltimaRemuneracao)
+                If vinc.Fim Is Nothing Then
+                    DataFinal = vinc.UltimaRemuneracao
                     DataFinal = DateSerial(DataFinal.Year, DataFinal.Month, DateTime.DaysInMonth(DataFinal.Year, DataFinal.Month))
                 Else
-                    DataFinal = CDate(vinc.Fim)
+                    DataFinal = vinc.Fim
                 End If
                 If Beneficio IsNot Nothing Then
-                    If Beneficio.DER.Length <> 10 Then Exit Sub 'Se a DER do benefício não for uma data compatível, sai do método
-                    If DataInicial > CDate(Beneficio.DER) Then Continue For
-                    If DataFinal > CDate(Beneficio.DER) Then DataFinal = CDate(Beneficio.DER)
+                    If Beneficio.DER Is Nothing Then Exit Sub 'Se a DER do benefício não for uma data compatível, sai do método
+                    If DataInicial > Beneficio.DER Then Continue For
+                    If DataFinal > Beneficio.DER Then DataFinal = Beneficio.DER
                 End If
 
 
                 For Each vinc2 In Autor.Vinculos 'Análise se o vínculo é concomitante com outros, para fins de contagem do tempo de serviço
 
                     If vinc.Sequencial <> vinc2.Sequencial Then 'Se não é o mesmo vínculo
-                        Dim DataInicial2 As Date = CDate(vinc2.Inicio)
+                        Dim DataInicial2 As Date = vinc2.Inicio
                         Dim DataFinal2 As Date
-                        If vinc2.Fim = "" Then
-                            If vinc2.UltimaRemuneracao = "" Then
+                        If vinc2.Fim Is Nothing Then
+                            If vinc2.UltimaRemuneracao Is Nothing Then
                                 DataFinal2 = DataInicial2
                             Else
 
-                                DataFinal2 = CDate(vinc2.UltimaRemuneracao)
+                                DataFinal2 = vinc2.UltimaRemuneracao
                                 DataFinal2 = DateSerial(DataFinal2.Year, DataFinal2.Month, DateTime.DaysInMonth(DataFinal2.Year, DataFinal2.Month))
                             End If
                         Else
-                            DataFinal2 = CDate(vinc2.Fim)
+                            DataFinal2 = vinc2.Fim
                         End If
                         If DataInicial >= DataInicial2 AndAlso DataInicial < DataFinal2 Then
                             listaConcomitancias.Add(CStr(vinc2.Sequencial))
@@ -216,4 +221,101 @@ Module funcoesINSS
         Return Idade
 
     End Function
+    Friend Sub calcQualidadeSegurado(Benef As Beneficio, Pessoa As Pessoa)
+        Dim codEspecie As String = Regex.Replace(Benef.Especie, "[^\d]", "")
+        If Not BenefNaoSegurado.Contains(codEspecie) Then 'Se é espécie de benefício que garante qualidade de segurado
+            If Benef.DIB IsNot Nothing Then
+                If Pessoa.QualidadeSegurado.Count = 0 Then
+                    Dim novaQualidade As New QualidadeSegurado
+                    novaQualidade.Inicio = Benef.DIB
+                    novaQualidade.tipodeQualidade = QualidadeSegurado.tipoQualidade.Beneficio
+                    If Benef.DCB IsNot Nothing Then
+                        Dim dataFim As Date = DateAdd("m", 14, Benef.DCB)
+                        dataFim = DateSerial(dataFim.Year, dataFim.Month, 15)
+                        novaQualidade.Fim = dataFim
+                    Else
+                        novaQualidade.Fim = Today
+                    End If
+                    Pessoa.QualidadeSegurado.Add(novaQualidade)
+                Else
+                    Dim novaQualidade As QualidadeSegurado
+                    Dim semQualidadeAnterior As Boolean = True
+                    For Each Periodo In Pessoa.QualidadeSegurado
+                        If Benef.DIB >= Periodo.Inicio And Benef.DIB <= Periodo.Fim Then 'Se a DIB está dentro do período da qualidade de segurado
+                            novaQualidade = Periodo
+                            semQualidadeAnterior = False
+                        End If
+                    Next
+                    If semQualidadeAnterior Then novaQualidade = New QualidadeSegurado
+
+                    If semQualidadeAnterior Then novaQualidade.Inicio = Benef.DIB
+                    If Benef.DCB IsNot Nothing Then
+                        Dim dataFim As Date = DateAdd("m", 14, Benef.DCB)
+                        dataFim = DateSerial(Year(dataFim), Month(dataFim), 15)
+                        If novaQualidade.Fim Is Nothing OrElse novaQualidade.Fim < dataFim Then novaQualidade.Fim = dataFim
+                    Else
+                        novaQualidade.Fim = Today
+                    End If
+                    If semQualidadeAnterior Then Pessoa.QualidadeSegurado.Add(novaQualidade)
+                End If
+            End If
+        End If
+    End Sub
+    Friend Sub calcQualidadeSegurado(vinc As Vinculo, Pessoa As Pessoa)
+
+        If vinc.Fim Is Nothing And vinc.UltimaRemuneracao Is Nothing Then Exit Sub
+
+        If vinc.Inicio IsNot Nothing Then
+            If Pessoa.QualidadeSegurado.Count = 0 Then
+                Dim novaQualidade As New QualidadeSegurado
+                novaQualidade.Inicio = vinc.Inicio
+                novaQualidade.tipodeQualidade = QualidadeSegurado.tipoQualidade.Atividade
+
+                If vinc.Fim IsNot Nothing Then
+                    Dim dataFim As Date = DateAdd("m", 14, vinc.Fim)
+                    dataFim = DateSerial(dataFim.Year, dataFim.Month, 15)
+                    novaQualidade.Fim = dataFim
+                Else
+                    If vinc.UltimaRemuneracao IsNot Nothing Then
+                        Dim dataFim As Date
+                        dataFim = vinc.UltimaRemuneracao
+                        dataFim = DateSerial(dataFim.Year, dataFim.Month, 15)
+                        dataFim = DateAdd("m", 14, dataFim)
+                        dataFim = DateSerial(dataFim.Year, dataFim.Month, 15)
+                        novaQualidade.Fim = dataFim
+                    End If
+                End If
+                Pessoa.QualidadeSegurado.Add(novaQualidade)
+            Else
+                Dim novaQualidade As QualidadeSegurado
+                Dim semQualidadeAnterior As Boolean = True
+                For Each Periodo In Pessoa.QualidadeSegurado
+                    If vinc.Inicio >= Periodo.Inicio And vinc.Inicio <= Periodo.Fim Then 'Se o início do vínculo está dentro do período da qualidade de segurado
+                        novaQualidade = Periodo
+                        novaQualidade.tipodeQualidade = QualidadeSegurado.tipoQualidade.Atividade
+                        semQualidadeAnterior = False
+                    End If
+                Next
+                If semQualidadeAnterior Then novaQualidade = New QualidadeSegurado With {.tipodeQualidade = QualidadeSegurado.tipoQualidade.Atividade}
+
+                If semQualidadeAnterior Then novaQualidade.Inicio = vinc.Inicio
+                If vinc.Fim IsNot Nothing Then
+                    Dim dataFim As Date = DateAdd("m", 14, vinc.Fim)
+                    dataFim = DateSerial(dataFim.Year, dataFim.Month, 15)
+                    If novaQualidade.Fim Is Nothing OrElse novaQualidade.Fim < dataFim Then novaQualidade.Fim = dataFim
+                Else
+                    If vinc.UltimaRemuneracao IsNot Nothing Then
+                        Dim dataFim As Date
+                        dataFim = vinc.UltimaRemuneracao
+                        dataFim = DateSerial(dataFim.Year, dataFim.Month, 15)
+                        dataFim = DateAdd("m", 14, dataFim)
+                        dataFim = DateSerial(dataFim.Year, dataFim.Month, 15)
+                        If novaQualidade.Fim Is Nothing OrElse novaQualidade.Fim < dataFim Then novaQualidade.Fim = dataFim
+                    End If
+                End If
+                If semQualidadeAnterior Then Pessoa.QualidadeSegurado.Add(novaQualidade)
+            End If
+        End If
+
+    End Sub
 End Module
