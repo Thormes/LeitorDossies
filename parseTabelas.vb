@@ -574,8 +574,14 @@ Module parseTabelas
         Dim tabelaPessoa As HtmlNode = Elemento.SelectSingleNode(".//table")
         Pessoa.Nome = tabelaPessoa.SelectSingleNode(".//tr[1]/td[1]").InnerText.Trim
         'If linha.SelectSingleNode(".//th").InnerText = "CPF" Then Pessoa.CPF = String.Format("{0:00000000000}", CLng(linha.SelectSingleNode(".//td").InnerText.Trim))
-        Pessoa.CPF = String.Format("{0:00000000000}", CLng(tabelaPessoa.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim))
-        Dim ValorNIT As String = tabelaPessoa.SelectSingleNode(".//tr[3]/td[1]").InnerText.Trim
+
+        If Pessoa.CPF Is Nothing Then
+            If tabelaPessoa.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim <> "" Then
+                Pessoa.CPF = String.Format("{0:00000000000}", CLng(tabelaPessoa.SelectSingleNode(".//tr[2]/td[1]").InnerText.Trim))
+            End If
+        End If
+
+            Dim ValorNIT As String = tabelaPessoa.SelectSingleNode(".//tr[3]/td[1]").InnerText.Trim
         If ValorNIT <> "" Then
             If Not Pessoa.NIT.Contains(ValorNIT) Then
                 Pessoa.NIT.Add(ValorNIT)

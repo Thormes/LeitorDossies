@@ -67,30 +67,69 @@ Namespace Minerador
                             listaTabelas.Add(teste.IdTabela)
                         End If
                     Next
-                    CalculaTempoContribuicao(Pessoa)
-                    ProcessaBeneficios()
+                    Autor.CalculaTempoContribuicao(Autor)
+                    Autor.ProcessaBeneficios()
                 Catch ex As Exception
                     Sucesso = False
-                    Mensagem &= Environment.NewLine & "Erro ao realizar a leitura do Dossiê: " & ex.StackTrace
+                Mensagem &= Environment.NewLine & "Erro ao realizar a leitura do Dossiê: " & ex.StackTrace
                 End Try
             End If
 
         End Sub
-        ''' <summary>
-        ''' Para facilitação do acesso aos dados, escolhe o último benefício indeferido, o último benefício cessado e a lista de benefícios ativos do segurado
-        ''' </summary>
-        Friend Sub ProcessaBeneficios()
+    End Class
+    Public Class OutroProcesso
+        Public Property Processo As String
+        Public Property Assunto As String
+        Public Property Interessados As String
+        Public Property OrgaoJulgador As String
+        Public Property Ajuizamento As String
+        Public Property DataAbertura As Nullable(Of Date)
+        Public Overrides Function Equals(obj As Object) As Boolean
+            Dim p As OutroProcesso = DirectCast(obj, OutroProcesso)
+            If (p.Processo = Me.Processo) Then
+                Return True
+            Else
+                Return False
+            End If
+
+        End Function
+    End Class
+    Public Class Pessoa
+        Private Const BenefNaoSegurado = "21,23,25,29,54,56,60,68,85,86,87,88,89,93"
+        Public Property Nome As String
+        Public Property Nascimento As Nullable(Of Date)
+        Public Property NIT As New List(Of String)
+        Public Property CPF As String
+        Public Property EstadoCivil As String
+        Public Property Filiacao As String
+        Public Property Sexo As String
+        Public Property EnderecoPrincipal As String
+        Public Property EnderecoSecundario As String
+        Public Property EnderecoReceita As String
+        Public Property OutrosProcessos As New List(Of OutroProcesso)
+        Public Property Beneficios As New List(Of Beneficio)
+        Public Property Vinculos As New List(Of Vinculo)
+        Public Property UltimoBeneficioRequerido As Beneficio
+        Public Property UltimoBeneficioIndeferido As Beneficio
+        Public Property UltimoBeneficioCessado As Beneficio
+        Public Property BeneficioEmMensalidadeRecuperacao As Beneficio
+        Public Property BeneficiosAtivos As List(Of Beneficio)
+        Public Property TempoContribuicao As String
+        Public Property TotalDias As Integer
+        Public Property QualidadeDeSegurado As New List(Of QualidadeSegurado)
+
+        Public Sub ProcessaBeneficios()
             Dim benefCessado As Beneficio
             Dim benefIndeferido As Beneficio
             Dim benefMensalidade As Beneficio
             Dim benefRequerido As Beneficio
             Dim benefAtivo As New List(Of Beneficio)
             'Autor.Beneficios.Sort(Function(x, y) CDate(x.DER).CompareTo(CDate(y.DER)))
-            For Each benef In Autor.Beneficios
+            For Each benef In Me.Beneficios
                 'If benef.Laudos.Count > 0 Then
                 '    benef.Laudos.Sort(Function(x, y) CDate(x.DataExame).CompareTo(CDate(y.DataExame)))
                 'End If
-                calcQualidadeSegurado(benef, Autor)
+                calcQualidadeSegurado(benef, Me)
                 If benefRequerido IsNot Nothing Then
                     If benef.DER IsNot Nothing Then
                         If benefRequerido.DER Is Nothing Then
@@ -98,12 +137,20 @@ Namespace Minerador
                         Else
                             If benefRequerido.DER <= benef.DER Then benefRequerido = benef
                         End If
+                    Else
+                        If benef.DIB IsNot Nothing Then
+                            If benefRequerido.DIB Is Nothing Then
+                                benefRequerido = benef
+                            Else
+                                If benefRequerido.DIB <= benef.DIB Then benefRequerido = benef
+                            End If
+                        End If
                     End If
                 Else
                     benefRequerido = benef
                 End If
-                If benef.DER IsNot Nothing AndAlso Autor.Nascimento IsNot Nothing Then
-                    benef.IdadeNaDER = CalculaIdade(Autor.Nascimento, benef.DER)
+                If benef.DER IsNot Nothing AndAlso Nascimento IsNot Nothing Then
+                    benef.IdadeNaDER = CalculaIdade(Nascimento, benef.DER)
                 End If
 
 
@@ -138,55 +185,219 @@ Namespace Minerador
                             If benefMensalidade.DCB <= benef.DCB Then benefMensalidade = benef
                         End If
                     End If
-                    If benef.DER IsNot Nothing Then CalculaTempoContribuicao(Autor, benef)
+                    If benef.DER IsNot Nothing Then CalculaTempoContribuicao(Me, benef)
                 End If
             Next
-            If benefCessado IsNot Nothing Then Autor.UltimoBeneficioCessado = benefCessado
-            If benefIndeferido IsNot Nothing Then Autor.UltimoBeneficioIndeferido = benefIndeferido
-            Autor.BeneficiosAtivos = benefAtivo
-            If benefMensalidade IsNot Nothing Then Autor.BeneficioEmMensalidadeRecuperacao = benefMensalidade
-            If benefRequerido IsNot Nothing Then Autor.UltimoBeneficioRequerido = benefRequerido
+            If benefCessado IsNot Nothing Then UltimoBeneficioCessado = benefCessado
+            If benefIndeferido IsNot Nothing Then UltimoBeneficioIndeferido = benefIndeferido
+            BeneficiosAtivos = benefAtivo
+            If benefMensalidade IsNot Nothing Then BeneficioEmMensalidadeRecuperacao = benefMensalidade
+            If benefRequerido IsNot Nothing Then UltimoBeneficioRequerido = benefRequerido
         End Sub
-    End Class
-    Public Class OutroProcesso
-        Public Property Processo As String
-        Public Property Assunto As String
-        Public Property Interessados As String
-        Public Property OrgaoJulgador As String
-        Public Property Ajuizamento As String
-        Public Property DataAbertura As Nullable(Of Date)
-        Public Overrides Function Equals(obj As Object) As Boolean
-            Dim p As OutroProcesso = DirectCast(obj, OutroProcesso)
-            If (p.Processo = Me.Processo) Then
-                Return True
+        Public Sub CalculaTempoContribuicao(Autor As Pessoa, Optional Beneficio As Beneficio = Nothing)
+            Dim TotalDeDias As Integer
+            For Each vinc In Autor.Vinculos
+                If Beneficio Is Nothing Then calcQualidadeSegurado(vinc, Autor)
+                Dim listaConcomitancias As New List(Of String)
+                If vinc.Fim IsNot Nothing OrElse vinc.UltimaRemuneracao IsNot Nothing Then 'Se tem data final ou última remuneração
+                    Dim DataInicial As Date = vinc.Inicio
+                    Dim DataFinal As Date
+                    If vinc.Fim Is Nothing Then
+                        DataFinal = vinc.UltimaRemuneracao
+                        DataFinal = DateSerial(DataFinal.Year, DataFinal.Month, DateTime.DaysInMonth(DataFinal.Year, DataFinal.Month))
+                    Else
+                        DataFinal = vinc.Fim
+                    End If
+                    If Beneficio IsNot Nothing Then
+                        If Beneficio.DER Is Nothing Then Exit Sub 'Se a DER do benefício não for uma data compatível, sai do método
+                        If DataInicial > Beneficio.DER Then Continue For
+                        If DataFinal > Beneficio.DER Then DataFinal = Beneficio.DER
+                    End If
+
+
+                    For Each vinc2 In Autor.Vinculos 'Análise se o vínculo é concomitante com outros, para fins de contagem do tempo de serviço
+
+                        If vinc.Sequencial <> vinc2.Sequencial Then 'Se não é o mesmo vínculo
+                            Dim DataInicial2 As Date = vinc2.Inicio
+                            Dim DataFinal2 As Date
+                            If vinc2.Fim Is Nothing Then
+                                If vinc2.UltimaRemuneracao Is Nothing Then
+                                    DataFinal2 = DataInicial2
+                                Else
+
+                                    DataFinal2 = vinc2.UltimaRemuneracao
+                                    DataFinal2 = DateSerial(DataFinal2.Year, DataFinal2.Month, DateTime.DaysInMonth(DataFinal2.Year, DataFinal2.Month))
+                                End If
+                            Else
+                                DataFinal2 = vinc2.Fim
+                            End If
+                            If DataInicial >= DataInicial2 AndAlso DataInicial < DataFinal2 Then
+                                listaConcomitancias.Add(CStr(vinc2.Sequencial))
+                                If DataFinal <= DataFinal2 Then
+                                    DataInicial = DataFinal
+                                Else
+                                    DataInicial = DataFinal2.AddDays(1)
+                                End If
+                            End If
+                            'If DataFinal <= DataFinal2 AndAlso DataFinal > DataInicial2 Then
+                            '    FinalAbsorvido = True
+                            '    If DataInicial >= DataInicial2 Then
+                            '        DataFinal = DataInicial
+                            '    Else
+                            '        DataFinal = DataInicial2.AddDays(-1)
+                            '    End If
+                            'End If
+                        End If
+                    Next
+
+                    'Dim Dias As Integer = DateDiff(DateInterval.Day, CDate(vinc.Inicio), CDate(vinc.Fim)) - 1
+                    Dim Dias As Integer
+                    If DataInicial = DataFinal Then
+                        Dias = 0
+                    Else
+                        Dias = Dias360(DataInicial, DataFinal, True) + 1
+                    End If
+                    Dim Anos As Integer = Math.Floor(Dias / 360)
+                    Dim Meses As Integer = Math.Floor((Dias Mod 360) / 30)
+                    Dim DiasRestantes As Integer = (Dias Mod 360) Mod 30
+                    If Beneficio Is Nothing Then
+                        vinc.Anos = Anos
+                        vinc.Dias = DiasRestantes
+                        vinc.Meses = Meses
+                        vinc.DiasTotais = Dias
+                        If listaConcomitancias.Count > 0 Then vinc.Concomitancia = String.Join(", ", listaConcomitancias)
+                    End If
+                    TotalDeDias += Dias
+                End If
+            Next
+            Dim TextoAnos As String = "Anos"
+            Dim TextoMeses As String = "Meses"
+            Dim TextoDias As String = "Dias"
+            Dim AnosTotais As Integer = Math.Floor(TotalDeDias / 360)
+            Dim MesesTotais As Integer = Math.Floor((TotalDeDias Mod 360) / 30)
+            Dim DiasTotaisRestantes As Integer = (TotalDeDias Mod 360) Mod 30
+            If AnosTotais = 1 Then TextoAnos = "Ano"
+            If MesesTotais = 1 Then TextoMeses = "Mês"
+            If DiasTotaisRestantes = 1 Then TextoDias = "Dia"
+            If Beneficio IsNot Nothing Then
+                Beneficio.TempoAteDER = String.Format("{0} {1}, {2} {3} e {4} {5}", AnosTotais, TextoAnos, MesesTotais, TextoMeses, DiasTotaisRestantes, TextoDias)
             Else
-                Return False
+                Autor.TempoContribuicao = String.Format("{0} {1}, {2} {3} e {4} {5}", AnosTotais, TextoAnos, MesesTotais, TextoMeses, DiasTotaisRestantes, TextoDias)
+                Autor.TotalDias = TotalDeDias
             End If
 
-        End Function
-    End Class
-    Public Class Pessoa
-        Public Property Nome As String
-        Public Property Nascimento As Nullable(Of Date)
-        Public Property NIT As New List(Of String)
-        Public Property CPF As String
-        Public Property EstadoCivil As String
-        Public Property Filiacao As String
-        Public Property Sexo As String
-        Public Property EnderecoPrincipal As String
-        Public Property EnderecoSecundario As String
-        Public Property EnderecoReceita As String
-        Public Property OutrosProcessos As New List(Of OutroProcesso)
-        Public Property Beneficios As New List(Of Beneficio)
-        Public Property Vinculos As New List(Of Vinculo)
-        Public Property UltimoBeneficioRequerido As Beneficio
-        Public Property UltimoBeneficioIndeferido As Beneficio
-        Public Property UltimoBeneficioCessado As Beneficio
-        Public Property BeneficioEmMensalidadeRecuperacao As Beneficio
-        Public Property BeneficiosAtivos As List(Of Beneficio)
-        Public Property TempoContribuicao As String
-        Public Property TotalDias As Integer
-        Public Property QualidadeSegurado As New List(Of QualidadeSegurado)
+
+        End Sub
+        Public Sub calcQualidadeSegurado(Benef As Beneficio, Pessoa As Pessoa)
+
+            If Benef.DIB Is Nothing Then Exit Sub
+            If Benef.Especie Is Nothing Then Exit Sub
+
+            Dim codEspecie As String = Regex.Replace(Benef.Especie, "[^\d]", "")
+            If Not BenefNaoSegurado.Contains(codEspecie) Then 'Se é espécie de benefício que garante qualidade de segurado
+                If Benef.DIB IsNot Nothing Then
+                    If Pessoa.QualidadeDeSegurado.Count = 0 Then
+                        Dim novaQualidade As New QualidadeSegurado
+                        novaQualidade.Inicio = Benef.DIB
+                        novaQualidade.tipodeQualidade = QualidadeSegurado.tipoQualidade.Beneficio
+                        If Benef.DCB IsNot Nothing Then
+                            Dim dataFim As Date = DateAdd("m", 14, Benef.DCB)
+                            dataFim = DateSerial(dataFim.Year, dataFim.Month, 15)
+                            novaQualidade.Fim = dataFim
+                        Else
+                            novaQualidade.Fim = Today
+                        End If
+                        Pessoa.QualidadeDeSegurado.Add(novaQualidade)
+                    Else
+                        Dim novaQualidade As QualidadeSegurado
+                        Dim semQualidadeAnterior As Boolean = True
+                        For Each Periodo In Pessoa.QualidadeDeSegurado
+                            If Benef.DIB >= Periodo.Inicio And Benef.DIB <= Periodo.Fim Then 'Se a DIB está dentro do período da qualidade de segurado
+                                novaQualidade = Periodo
+                                semQualidadeAnterior = False
+                            End If
+                        Next
+                        If semQualidadeAnterior Then novaQualidade = New QualidadeSegurado With {.tipodeQualidade = QualidadeSegurado.tipoQualidade.Beneficio}
+
+                        If semQualidadeAnterior Then novaQualidade.Inicio = Benef.DIB
+                        If Benef.DCB IsNot Nothing Then
+                            Dim dataFim As Date = DateAdd("m", 14, Benef.DCB)
+                            dataFim = DateSerial(Year(dataFim), Month(dataFim), 15)
+                            If novaQualidade.Fim Is Nothing OrElse novaQualidade.Fim < dataFim Then
+                                novaQualidade.Fim = dataFim
+                                novaQualidade.tipodeQualidade = QualidadeSegurado.tipoQualidade.Beneficio
+                            End If
+                        Else
+                            novaQualidade.Fim = Today
+                        End If
+                        If semQualidadeAnterior Then Pessoa.QualidadeDeSegurado.Add(novaQualidade)
+                    End If
+                End If
+            End If
+        End Sub
+        Public Sub calcQualidadeSegurado(vinc As Vinculo, Pessoa As Pessoa)
+
+            If vinc.Fim Is Nothing AndAlso vinc.UltimaRemuneracao Is Nothing Then Exit Sub
+
+            If vinc.Inicio IsNot Nothing Then
+                If Pessoa.QualidadeDeSegurado.Count = 0 Then
+                    Dim novaQualidade As New QualidadeSegurado
+                    novaQualidade.Inicio = vinc.Inicio
+                    novaQualidade.tipodeQualidade = QualidadeSegurado.tipoQualidade.Atividade
+
+                    If vinc.Fim IsNot Nothing Then
+                        Dim dataFim As Date = DateAdd("m", 14, vinc.Fim)
+                        dataFim = DateSerial(dataFim.Year, dataFim.Month, 15)
+                        novaQualidade.Fim = dataFim
+                    Else
+                        If vinc.UltimaRemuneracao IsNot Nothing Then
+                            Dim dataFim As Date
+                            dataFim = vinc.UltimaRemuneracao
+                            dataFim = DateSerial(dataFim.Year, dataFim.Month, 15)
+                            dataFim = DateAdd("m", 14, dataFim)
+                            dataFim = DateSerial(dataFim.Year, dataFim.Month, 15)
+                            novaQualidade.Fim = dataFim
+                        End If
+                    End If
+                    Pessoa.QualidadeDeSegurado.Add(novaQualidade)
+                Else
+                    Dim novaQualidade As QualidadeSegurado
+                    Dim semQualidadeAnterior As Boolean = True
+                    For Each Periodo In Pessoa.QualidadeDeSegurado
+                        If vinc.Inicio >= Periodo.Inicio And vinc.Inicio <= Periodo.Fim Then 'Se o início do vínculo está dentro do período da qualidade de segurado
+                            novaQualidade = Periodo
+                            novaQualidade.tipodeQualidade = QualidadeSegurado.tipoQualidade.Atividade
+                            semQualidadeAnterior = False
+                        End If
+                    Next
+                    If semQualidadeAnterior Then novaQualidade = New QualidadeSegurado With {.tipodeQualidade = QualidadeSegurado.tipoQualidade.Atividade}
+
+                    If semQualidadeAnterior Then novaQualidade.Inicio = vinc.Inicio
+                    If vinc.Fim IsNot Nothing Then
+                        Dim dataFim As Date = DateAdd("m", 14, vinc.Fim)
+                        dataFim = DateSerial(dataFim.Year, dataFim.Month, 15)
+                        If novaQualidade.Fim Is Nothing OrElse novaQualidade.Fim < dataFim Then
+                            novaQualidade.Fim = dataFim
+                            novaQualidade.tipodeQualidade = QualidadeSegurado.tipoQualidade.Atividade
+                        End If
+                    Else
+                        If vinc.UltimaRemuneracao IsNot Nothing Then
+                            Dim dataFim As Date
+                            dataFim = vinc.UltimaRemuneracao
+                            dataFim = DateSerial(dataFim.Year, dataFim.Month, 15)
+                            dataFim = DateAdd("m", 14, dataFim)
+                            dataFim = DateSerial(dataFim.Year, dataFim.Month, 15)
+                            If novaQualidade.Fim Is Nothing OrElse novaQualidade.Fim < dataFim Then
+                                novaQualidade.Fim = dataFim
+                                novaQualidade.tipodeQualidade = QualidadeSegurado.tipoQualidade.Atividade
+                            End If
+                        End If
+                    End If
+                    If semQualidadeAnterior Then Pessoa.QualidadeDeSegurado.Add(novaQualidade)
+                End If
+            End If
+
+        End Sub
     End Class
     Public Class Beneficio
         Public Property Sequencial As Integer
